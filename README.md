@@ -55,5 +55,3 @@ A default `from:` and `to:` address is also required.
 Thanks to the [Syfmony team](https://symfony.com) for making this plugin possible.
 
 
-- [ ] Future plans, if any
-
