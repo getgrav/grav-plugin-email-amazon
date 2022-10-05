@@ -1,7 +1,7 @@
 name: Email Amazon
 slug: email-amazon
 type: plugin
-version: 1.0.0-rc.1
+version: 1.0.0-rc.2
 testing: true
 description: Amazon SES integration for new Email plugin
 icon: envelope
@@ -16,7 +16,7 @@ license: MIT
 
 dependencies:
   - { name: grav, version: '>=1.7.0' }
-  - { name: email, version: '>=4.0.0' }
+  - { name: email, version: '>=4.0.0-rc.1' }
 
 form:
   validation: loose
