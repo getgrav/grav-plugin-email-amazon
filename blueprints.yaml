@@ -1,0 +1,58 @@
+name: Email Amazon
+slug: email-amazon
+type: plugin
+version: 0.1.0
+description: Amazon SES integration for new Email plugin
+icon: envelope
+author:
+  name: Team Grav
+  email: devs@getgrav.org
+homepage: https://github.com/getgrav/grav-plugin-email-amazon
+keywords: grav, plugin, etc
+bugs: https://github.com/getgrav/grav-plugin-email-amazon/issues
+docs: https://github.com/getgrav/grav-plugin-email-amazon/blob/develop/README.md
+license: MIT
+
+dependencies:
+  - { name: grav, version: '>=1.7.0' }
+  - { name: email, version: '>=4.0.0' }
+
+form:
+  validation: loose
+  fields:
+    enabled:
+      type: toggle
+      label: PLUGIN_ADMIN.PLUGIN_STATUS
+      highlight: 1
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+
+    transport:
+      type: select
+      size: small
+      label: Transport
+      default: api
+      options:
+        api: API (fastest)
+        https: HTTPS
+        smtp: SMTP
+
+    username:
+      type: text
+      label: Username (for SMTP Only)
+
+    password:
+      type: text
+      label: Password (for SMTP Only)
+
+    access_key:
+      type: text
+      label: Access Key (for API/HTTPS)
+
+    secret_key:
+      type: text
+      label: Secret Key (for API/HTTPS)

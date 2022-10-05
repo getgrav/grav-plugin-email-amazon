@@ -1,0 +1,37 @@
+{
+  "name": "getgrav/email-amazon",
+  "type": "grav-plugin",
+  "description": "Amazon integration for new Email plugin",
+  "keywords": ["plugin"],
+  "homepage": "https://github.com/getgrav/grav-plugin-email-amazon",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Team Grav",
+      "email": "devs@getgrav.org",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.3.6",
+    "symfony/amazon-mailer": "^5.4"
+  },
+  "replace": {
+    "symfony/mailer": "*",
+    "symfony/http-client": "*",
+    "symfony/deprecation-contracts": "*",
+    "symfony/polyfill-php80": "*",
+    "psr/event-dispatcher": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Grav\\Plugin\\EmailAmazon\\": "classes/"
+    },
+    "classmap":  ["email-amazon.php"]
+  },
+  "config": {
+    "platform": {
+      "php": "7.3.6"
+    }
+  }
+}
