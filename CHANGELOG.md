@@ -1,3 +1,9 @@
+# v1.0.0-rc.3
+##  10/12/2022
+
+1. [](#bugfix)
+   * default to empty string in config values are null
+
 # v1.0.0-rc.2
 ##  10/05/2022
 

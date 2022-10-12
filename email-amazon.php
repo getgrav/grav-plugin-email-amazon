@@ -52,9 +52,9 @@ class EmailAmazonPlugin extends Plugin
             $options = $this->config->get('plugins.email-amazon');
             $dsn = "ses+{$options['transport']}://";
             if ($options['transport'] === 'smtp') {
-                $dsn .= urlencode($options['username']) .":".urlencode($options['password']);
+                $dsn .= urlencode($options['username'] ?? '') .":".urlencode($options['password'] ?? '');
             } else {
-                $dsn .= urlencode($options['access_key']) .":".urlencode($options['secret_key']);
+                $dsn .= urlencode($options['access_key'] ?? '') .":".urlencode($options['secret_key'] ?? '');
             }
             $dsn .= "@default";
             $e['dsn'] = $dsn;
