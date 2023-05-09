@@ -28,19 +28,30 @@ Here is the default configuration and an explanation of available options:
 
 ```yaml
 enabled: true
+transport: api
+username:
+password:
+access_key:
+secret_key:
 ```
 
 Note that if you use the Admin Plugin, a file with your configuration named email-amazon.yaml will be saved in the `user/config/plugins/`-folder once the configuration is saved in the Admin.
 
 ## Usage
 
-**Describe how to use the plugin.**
+The **transport** can either be `api` (recommended), `https` or `smtp`.  `username` and `password` is used for the `SMTP` option, and `access_key` and `secret_key` is used by `api` and `https`.
+
+Once the options are set, all other configuration regarding email should be done in the main `email` plugin.  You just need to set the engine in the `email.yaml` configuration:
+
+```yaml
+mailer:
+  engine: amazon
+```
+
+A default `from:` and `to:` address is also required.
 
 ## Credits
 
-**Did you incorporate third-party code? Want to thank somebody?**
+Thanks to the [Syfmony team](https://symfony.com) for making this plugin possible.
 
-## To Do
-
-- [ ] Future plans, if any
 
