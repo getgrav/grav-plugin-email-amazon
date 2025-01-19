@@ -50,6 +50,12 @@ mailer:
 
 A default `from:` and `to:` address is also required.
 
+To set a specific region, add to the `email-amazon.yaml` configuration with your desired region:
+
+```yaml
+region: us-east-1
+```
+
 ## Credits
 
 Thanks to the [Syfmony team](https://symfony.com) for making this plugin possible.
