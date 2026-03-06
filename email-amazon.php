@@ -57,6 +57,9 @@ class EmailAmazonPlugin extends Plugin
                 $dsn .= urlencode($options['access_key'] ?? '') .":".urlencode($options['secret_key'] ?? '');
             }
             $dsn .= "@default";
+            if (isset($options['region'])) {
+                $dsn .= "?region=" . urlencode($options['region']);
+            }
             $e['dsn'] = $dsn;
             $e->stopPropagation();
         }

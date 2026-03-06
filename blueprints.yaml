@@ -1,7 +1,7 @@
 name: Email Amazon
 slug: email-amazon
 type: plugin
-version: 1.0.0
+version: 1.0.1
 testing: false
 description: Amazon SES integration for new Email plugin
 icon: envelope
@@ -57,3 +57,9 @@ form:
     secret_key:
       type: text
       label: Secret Key (for API/HTTPS)
+
+    region:
+      type: text
+      size: small
+      label: AWS Region
+      placeholder: us-east-1

@@ -25,11 +25,11 @@ use AsyncAws\Core\Sts\ValueObject\Tag;
 class StsClient extends AbstractApi
 {
     /**
-     * Returns a set of temporary security credentials that you can use to access Amazon Web Services resources that you
-     * might not normally have access to. These temporary credentials consist of an access key ID, a secret access key, and
-     * a security token. Typically, you use `AssumeRole` within your account or for cross-account access. For a comparison
-     * of `AssumeRole` with other API operations that produce temporary credentials, see Requesting Temporary Security
-     * Credentials and Comparing the Amazon Web Services STS API operations in the *IAM User Guide*.
+     * Returns a set of temporary security credentials that you can use to access Amazon Web Services resources. These
+     * temporary credentials consist of an access key ID, a secret access key, and a security token. Typically, you use
+     * `AssumeRole` within your account or for cross-account access. For a comparison of `AssumeRole` with other API
+     * operations that produce temporary credentials, see Requesting Temporary Security Credentials and Comparing the Amazon
+     * Web Services STS API operations in the *IAM User Guide*.
      *
      * @see https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html
      * @see https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html#stsapi_comparison
@@ -48,6 +48,7 @@ class StsClient extends AbstractApi
      *   SerialNumber?: string,
      *   TokenCode?: string,
      *   SourceIdentity?: string,
+     *
      *   @region?: string,
      * }|AssumeRoleRequest $input
      *
@@ -86,6 +87,7 @@ class StsClient extends AbstractApi
      *   PolicyArns?: PolicyDescriptorType[],
      *   Policy?: string,
      *   DurationSeconds?: int,
+     *
      *   @region?: string,
      * }|AssumeRoleWithWebIdentityRequest $input
      *
@@ -120,6 +122,7 @@ class StsClient extends AbstractApi
      * @see https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sts-2011-06-15.html#getcalleridentity
      *
      * @param array{
+     *
      *   @region?: string,
      * }|GetCallerIdentityRequest $input
      */
