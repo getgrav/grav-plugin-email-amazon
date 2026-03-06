@@ -58,7 +58,7 @@ class EmailAmazonPlugin extends Plugin
             }
             $dsn .= "@default";
             if (isset($options['region'])) {
-                $dsn .= "?region={$options['region']}";
+                $dsn .= "?region=" . urlencode($options['region']);
             }
             $e['dsn'] = $dsn;
             $e->stopPropagation();
