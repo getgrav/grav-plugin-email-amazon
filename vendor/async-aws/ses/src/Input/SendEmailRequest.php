@@ -17,9 +17,9 @@ use AsyncAws\Ses\ValueObject\Template;
 
 /**
  * Represents a request to send a single formatted email using Amazon SES. For more information, see the Amazon SES
- * Developer Guide.
+ * Developer Guide [^1].
  *
- * @see https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-formatted.html
+ * [^1]: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-formatted.html
  */
 final class SendEmailRequest extends Input
 {
@@ -33,6 +33,18 @@ final class SendEmailRequest extends Input
     /**
      * This parameter is used only for sending authorization. It is the ARN of the identity that is associated with the
      * sending authorization policy that permits you to use the email address specified in the `FromEmailAddress` parameter.
+     *
+     * For example, if the owner of example.com (which has ARN arn:aws:ses:us-east-1:123456789012:identity/example.com)
+     * attaches a policy to it that authorizes you to use sender@example.com, then you would specify the
+     * `FromEmailAddressIdentityArn` to be arn:aws:ses:us-east-1:123456789012:identity/example.com, and the
+     * `FromEmailAddress` to be sender@example.com.
+     *
+     * For more information about sending authorization, see the Amazon SES Developer Guide [^1].
+     *
+     * For Raw emails, the `FromEmailAddressIdentityArn` value overrides the X-SES-SOURCE-ARN and X-SES-FROM-ARN headers
+     * specified in raw email message content.
+     *
+     * [^1]: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/sending-authorization.html
      *
      * @var string|null
      */
@@ -64,6 +76,15 @@ final class SendEmailRequest extends Input
      * This parameter is used only for sending authorization. It is the ARN of the identity that is associated with the
      * sending authorization policy that permits you to use the email address specified in the
      * `FeedbackForwardingEmailAddress` parameter.
+     *
+     * For example, if the owner of example.com (which has ARN arn:aws:ses:us-east-1:123456789012:identity/example.com)
+     * attaches a policy to it that authorizes you to use feedback@example.com, then you would specify the
+     * `FeedbackForwardingEmailAddressIdentityArn` to be arn:aws:ses:us-east-1:123456789012:identity/example.com, and the
+     * `FeedbackForwardingEmailAddress` to be feedback@example.com.
+     *
+     * For more information about sending authorization, see the Amazon SES Developer Guide [^1].
+     *
+     * [^1]: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/sending-authorization.html
      *
      * @var string|null
      */
@@ -104,17 +125,17 @@ final class SendEmailRequest extends Input
 
     /**
      * @param array{
-     *   FromEmailAddress?: string,
-     *   FromEmailAddressIdentityArn?: string,
-     *   Destination?: Destination|array,
-     *   ReplyToAddresses?: string[],
-     *   FeedbackForwardingEmailAddress?: string,
-     *   FeedbackForwardingEmailAddressIdentityArn?: string,
+     *   FromEmailAddress?: null|string,
+     *   FromEmailAddressIdentityArn?: null|string,
+     *   Destination?: null|Destination|array,
+     *   ReplyToAddresses?: null|string[],
+     *   FeedbackForwardingEmailAddress?: null|string,
+     *   FeedbackForwardingEmailAddressIdentityArn?: null|string,
      *   Content?: EmailContent|array,
-     *   EmailTags?: MessageTag[],
-     *   ConfigurationSetName?: string,
-     *   ListManagementOptions?: ListManagementOptions|array,
-     *   @region?: string,
+     *   EmailTags?: null|array<MessageTag|array>,
+     *   ConfigurationSetName?: null|string,
+     *   ListManagementOptions?: null|ListManagementOptions|array,
+     *   '@region'?: string|null,
      * } $input
      */
     public function __construct(array $input = [])
@@ -132,6 +153,21 @@ final class SendEmailRequest extends Input
         parent::__construct($input);
     }
 
+    /**
+     * @param array{
+     *   FromEmailAddress?: null|string,
+     *   FromEmailAddressIdentityArn?: null|string,
+     *   Destination?: null|Destination|array,
+     *   ReplyToAddresses?: null|string[],
+     *   FeedbackForwardingEmailAddress?: null|string,
+     *   FeedbackForwardingEmailAddressIdentityArn?: null|string,
+     *   Content?: EmailContent|array,
+     *   EmailTags?: null|array<MessageTag|array>,
+     *   ConfigurationSetName?: null|string,
+     *   ListManagementOptions?: null|ListManagementOptions|array,
+     *   '@region'?: string|null,
+     * }|SendEmailRequest $input
+     */
     public static function create($input): self
     {
         return $input instanceof self ? $input : new self($input);
