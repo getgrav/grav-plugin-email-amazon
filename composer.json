@@ -19,9 +19,13 @@
   "replace": {
     "symfony/mailer": "*",
     "symfony/http-client": "*",
+    "symfony/http-client-contracts": "*",
+    "symfony/service-contracts": "*",
     "symfony/deprecation-contracts": "*",
     "symfony/polyfill-php80": "*",
-    "psr/event-dispatcher": "*"
+    "psr/event-dispatcher": "*",
+    "psr/cache": "*",
+    "psr/log": "*"
   },
   "autoload": {
     "psr-4": {

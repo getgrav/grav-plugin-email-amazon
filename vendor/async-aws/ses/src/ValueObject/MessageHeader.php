@@ -5,26 +5,25 @@ namespace AsyncAws\Ses\ValueObject;
 use AsyncAws\Core\Exception\InvalidArgument;
 
 /**
- * Contains the name and value of a tag that you apply to an email. You can use message tags when you publish email
- * sending events.
+ * Contains the name and value of a message header that you add to an email.
  */
-final class MessageTag
+final class MessageHeader
 {
     /**
-     * The name of the message tag. The message tag name has to meet the following criteria:
+     * The name of the message header. The message header name has to meet the following criteria:
      *
-     * - It can only contain ASCII letters (a–z, A–Z), numbers (0–9), underscores (_), or dashes (-).
-     * - It can contain no more than 256 characters.
+     * - Can contain any printable ASCII character (33 - 126) except for colon (:).
+     * - Can contain no more than 126 characters.
      *
      * @var string
      */
     private $name;
 
     /**
-     * The value of the message tag. The message tag value has to meet the following criteria:
+     * The value of the message header. The message header value has to meet the following criteria:
      *
-     * - It can only contain ASCII letters (a–z, A–Z), numbers (0–9), underscores (_), or dashes (-).
-     * - It can contain no more than 256 characters.
+     * - Can contain any printable ASCII character.
+     * - Can contain no more than 870 characters.
      *
      * @var string
      */
@@ -46,7 +45,7 @@ final class MessageTag
      * @param array{
      *   Name: string,
      *   Value: string,
-     * }|MessageTag $input
+     * }|MessageHeader $input
      */
     public static function create($input): self
     {

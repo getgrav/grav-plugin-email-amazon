@@ -3,22 +3,22 @@
 namespace AsyncAws\Ses\ValueObject;
 
 /**
- * An object that defines the entire content of the email, including the message headers and the body content. You can
- * create a simple email message, in which you specify the subject and the text and HTML versions of the message body.
- * You can also create raw messages, in which you specify a complete MIME-formatted message. Raw messages can include
- * attachments and custom headers.
+ * An object that defines the entire content of the email, including the message headers, body content, and attachments.
+ * For a simple email message, you specify the subject and provide both text and HTML versions of the message body. You
+ * can also add attachments to simple and templated messages. For a raw message, you provide a complete MIME-formatted
+ * message, which can include custom headers and attachments.
  */
 final class EmailContent
 {
     /**
-     * The simple email message. The message consists of a subject and a message body.
+     * The simple email message. The message consists of a subject, message body and attachments list.
      *
      * @var Message|null
      */
     private $simple;
 
     /**
-     * The raw email message. The message has to meet the following criteria:.
+     * The raw email message. The message has to meet the following criteria:
      *
      * - The message has to contain a header and a body, separated by one blank line.
      * - All of the required header fields must be present in the message.

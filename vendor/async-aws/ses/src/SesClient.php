@@ -15,7 +15,11 @@ use AsyncAws\Ses\Exception\MessageRejectedException;
 use AsyncAws\Ses\Exception\NotFoundException;
 use AsyncAws\Ses\Exception\SendingPausedException;
 use AsyncAws\Ses\Exception\TooManyRequestsException;
+use AsyncAws\Ses\Input\DeleteSuppressedDestinationRequest;
+use AsyncAws\Ses\Input\GetSuppressedDestinationRequest;
 use AsyncAws\Ses\Input\SendEmailRequest;
+use AsyncAws\Ses\Result\DeleteSuppressedDestinationResponse;
+use AsyncAws\Ses\Result\GetSuppressedDestinationResponse;
 use AsyncAws\Ses\Result\SendEmailResponse;
 use AsyncAws\Ses\ValueObject\Destination;
 use AsyncAws\Ses\ValueObject\EmailContent;
@@ -25,7 +29,61 @@ use AsyncAws\Ses\ValueObject\MessageTag;
 class SesClient extends AbstractApi
 {
     /**
-     * Sends an email message. You can use the Amazon SES API v2 to send the following types of messages:.
+     * Removes an email address from the suppression list for your account.
+     *
+     * @see https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_DeleteSuppressedDestination.html
+     * @see https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-email-2019-09-27.html#deletesuppresseddestination
+     *
+     * @param array{
+     *   EmailAddress: string,
+     *   '@region'?: string|null,
+     * }|DeleteSuppressedDestinationRequest $input
+     *
+     * @throws BadRequestException
+     * @throws NotFoundException
+     * @throws TooManyRequestsException
+     */
+    public function deleteSuppressedDestination($input): DeleteSuppressedDestinationResponse
+    {
+        $input = DeleteSuppressedDestinationRequest::create($input);
+        $response = $this->getResponse($input->request(), new RequestContext(['operation' => 'DeleteSuppressedDestination', 'region' => $input->getRegion(), 'exceptionMapping' => [
+            'BadRequestException' => BadRequestException::class,
+            'NotFoundException' => NotFoundException::class,
+            'TooManyRequestsException' => TooManyRequestsException::class,
+        ]]));
+
+        return new DeleteSuppressedDestinationResponse($response);
+    }
+
+    /**
+     * Retrieves information about a specific email address that's on the suppression list for your account.
+     *
+     * @see https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_GetSuppressedDestination.html
+     * @see https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-email-2019-09-27.html#getsuppresseddestination
+     *
+     * @param array{
+     *   EmailAddress: string,
+     *   '@region'?: string|null,
+     * }|GetSuppressedDestinationRequest $input
+     *
+     * @throws BadRequestException
+     * @throws NotFoundException
+     * @throws TooManyRequestsException
+     */
+    public function getSuppressedDestination($input): GetSuppressedDestinationResponse
+    {
+        $input = GetSuppressedDestinationRequest::create($input);
+        $response = $this->getResponse($input->request(), new RequestContext(['operation' => 'GetSuppressedDestination', 'region' => $input->getRegion(), 'exceptionMapping' => [
+            'BadRequestException' => BadRequestException::class,
+            'NotFoundException' => NotFoundException::class,
+            'TooManyRequestsException' => TooManyRequestsException::class,
+        ]]));
+
+        return new GetSuppressedDestinationResponse($response);
+    }
+
+    /**
+     * Sends an email message. You can use the Amazon SES API v2 to send the following types of messages:
      *
      * - **Simple** – A standard email message. When you create this type of message, you specify the sender, the
      *   recipient, and the message body, and Amazon SES assembles the message for you.
@@ -48,31 +106,33 @@ class SesClient extends AbstractApi
      *   Content: EmailContent|array,
      *   EmailTags?: null|array<MessageTag|array>,
      *   ConfigurationSetName?: null|string,
+     *   EndpointId?: null|string,
+     *   TenantName?: null|string,
      *   ListManagementOptions?: null|ListManagementOptions|array,
      *   '@region'?: string|null,
      * }|SendEmailRequest $input
      *
-     * @throws TooManyRequestsException
-     * @throws LimitExceededException
      * @throws AccountSuspendedException
-     * @throws SendingPausedException
-     * @throws MessageRejectedException
-     * @throws MailFromDomainNotVerifiedException
-     * @throws NotFoundException
      * @throws BadRequestException
+     * @throws LimitExceededException
+     * @throws MailFromDomainNotVerifiedException
+     * @throws MessageRejectedException
+     * @throws NotFoundException
+     * @throws SendingPausedException
+     * @throws TooManyRequestsException
      */
     public function sendEmail($input): SendEmailResponse
     {
         $input = SendEmailRequest::create($input);
         $response = $this->getResponse($input->request(), new RequestContext(['operation' => 'SendEmail', 'region' => $input->getRegion(), 'exceptionMapping' => [
-            'TooManyRequestsException' => TooManyRequestsException::class,
-            'LimitExceededException' => LimitExceededException::class,
             'AccountSuspendedException' => AccountSuspendedException::class,
-            'SendingPausedException' => SendingPausedException::class,
-            'MessageRejected' => MessageRejectedException::class,
-            'MailFromDomainNotVerifiedException' => MailFromDomainNotVerifiedException::class,
-            'NotFoundException' => NotFoundException::class,
             'BadRequestException' => BadRequestException::class,
+            'LimitExceededException' => LimitExceededException::class,
+            'MailFromDomainNotVerifiedException' => MailFromDomainNotVerifiedException::class,
+            'MessageRejected' => MessageRejectedException::class,
+            'NotFoundException' => NotFoundException::class,
+            'SendingPausedException' => SendingPausedException::class,
+            'TooManyRequestsException' => TooManyRequestsException::class,
         ]]));
 
         return new SendEmailResponse($response);
@@ -122,6 +182,13 @@ class SesClient extends AbstractApi
                 return [
                     'endpoint' => 'https://email-fips.us-west-2.amazonaws.com',
                     'signRegion' => 'us-west-2',
+                    'signService' => 'ses',
+                    'signVersions' => ['v4'],
+                ];
+            case 'fips-us-gov-east-1':
+                return [
+                    'endpoint' => 'https://email-fips.us-gov-east-1.amazonaws.com',
+                    'signRegion' => 'us-gov-east-1',
                     'signService' => 'ses',
                     'signVersions' => ['v4'],
                 ];

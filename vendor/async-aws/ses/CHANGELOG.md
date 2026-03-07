@@ -2,6 +2,67 @@
 
 ## NOT RELEASED
 
+## 1.13.0
+
+### Added
+
+- AWS api-change: This release introduces support for Multi-tenant management
+
+### Changed
+
+- AWS enhancement: Documentation updates.
+
+## 1.12.0
+
+### Added
+
+- AWS api-change: This release enables customers to provide attachments in the SESv2 SendEmail and SendBulkEmail APIs.
+
+### Changed
+
+- Sort exception alphabetically.
+
+## 1.11.0
+
+### Added
+
+- Added support for `getSuppressedDestination` and `deleteSuppressedDestination` to manage SESv2 suppression list entries.
+
+## 1.10.0
+
+### Added
+
+- AWS api-change: Introduces support for multi-region endpoint.
+
+## 1.9.0
+
+### Added
+
+- AWS api-change: This release enables customers to provide the email template content in the SESv2 SendEmail and SendBulkEmail APIs instead of the name or the ARN of a stored email template.
+
+## 1.8.2
+
+### Changed
+
+- Enable compiler optimization for the `sprintf` function.
+
+## 1.8.1
+
+### Changed
+
+- Add `Accept: application/json` header in request to fix incompatibility with 3rd party providers
+
+## 1.8.0
+
+### Added
+
+- AWS api-change: Adds support for providing custom headers within SendEmail and SendBulkEmail for SESv2.
+- AWS api-change: Added `fips-us-gov-east-1` region
+
+### Changed
+
+- AWS enhancement: Documentation updates.
+
 ## 1.7.0
 
 ### Added

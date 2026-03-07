@@ -5,13 +5,14 @@ namespace AsyncAws\Ses\ValueObject;
 /**
  * An object that defines the email template to use for an email message, and the values to use for any message
  * variables in that template. An *email template* is a type of message template that contains content that you want to
- * define, save, and reuse in email messages that you send.
+ * reuse in email messages that you send. You can specifiy the email template by providing the name or ARN of an *email
+ * template* previously saved in your Amazon SES account or by providing the full template content.
  */
 final class Template
 {
     /**
-     * The name of the template. You will refer to this name when you send email using the `SendTemplatedEmail` or
-     * `SendBulkTemplatedEmail` operations.
+     * The name of the template. You will refer to this name when you send email using the `SendEmail` or `SendBulkEmail`
+     * operations.
      *
      * @var string|null
      */
@@ -25,6 +26,16 @@ final class Template
     private $templateArn;
 
     /**
+     * The content of the template.
+     *
+     * > Amazon SES supports only simple substitions when you send email using the `SendEmail` or `SendBulkEmail` operations
+     * > and you provide the full template content in the request.
+     *
+     * @var EmailTemplateContent|null
+     */
+    private $templateContent;
+
+    /**
      * An object that defines the values to use for message variables in the template. This object is a set of key-value
      * pairs. Each key defines a message variable in the template. The corresponding value defines the value to use for that
      * variable.
@@ -34,24 +45,47 @@ final class Template
     private $templateData;
 
     /**
+     * The list of message headers that will be added to the email message.
+     *
+     * @var MessageHeader[]|null
+     */
+    private $headers;
+
+    /**
+     * The List of attachments to include in your email. All recipients will receive the same attachments.
+     *
+     * @var Attachment[]|null
+     */
+    private $attachments;
+
+    /**
      * @param array{
      *   TemplateName?: null|string,
      *   TemplateArn?: null|string,
+     *   TemplateContent?: null|EmailTemplateContent|array,
      *   TemplateData?: null|string,
+     *   Headers?: null|array<MessageHeader|array>,
+     *   Attachments?: null|array<Attachment|array>,
      * } $input
      */
     public function __construct(array $input)
     {
         $this->templateName = $input['TemplateName'] ?? null;
         $this->templateArn = $input['TemplateArn'] ?? null;
+        $this->templateContent = isset($input['TemplateContent']) ? EmailTemplateContent::create($input['TemplateContent']) : null;
         $this->templateData = $input['TemplateData'] ?? null;
+        $this->headers = isset($input['Headers']) ? array_map([MessageHeader::class, 'create'], $input['Headers']) : null;
+        $this->attachments = isset($input['Attachments']) ? array_map([Attachment::class, 'create'], $input['Attachments']) : null;
     }
 
     /**
      * @param array{
      *   TemplateName?: null|string,
      *   TemplateArn?: null|string,
+     *   TemplateContent?: null|EmailTemplateContent|array,
      *   TemplateData?: null|string,
+     *   Headers?: null|array<MessageHeader|array>,
+     *   Attachments?: null|array<Attachment|array>,
      * }|Template $input
      */
     public static function create($input): self
@@ -59,9 +93,30 @@ final class Template
         return $input instanceof self ? $input : new self($input);
     }
 
+    /**
+     * @return Attachment[]
+     */
+    public function getAttachments(): array
+    {
+        return $this->attachments ?? [];
+    }
+
+    /**
+     * @return MessageHeader[]
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers ?? [];
+    }
+
     public function getTemplateArn(): ?string
     {
         return $this->templateArn;
+    }
+
+    public function getTemplateContent(): ?EmailTemplateContent
+    {
+        return $this->templateContent;
     }
 
     public function getTemplateData(): ?string
@@ -86,8 +141,27 @@ final class Template
         if (null !== $v = $this->templateArn) {
             $payload['TemplateArn'] = $v;
         }
+        if (null !== $v = $this->templateContent) {
+            $payload['TemplateContent'] = $v->requestBody();
+        }
         if (null !== $v = $this->templateData) {
             $payload['TemplateData'] = $v;
+        }
+        if (null !== $v = $this->headers) {
+            $index = -1;
+            $payload['Headers'] = [];
+            foreach ($v as $listValue) {
+                ++$index;
+                $payload['Headers'][$index] = $listValue->requestBody();
+            }
+        }
+        if (null !== $v = $this->attachments) {
+            $index = -1;
+            $payload['Attachments'] = [];
+            foreach ($v as $listValue) {
+                ++$index;
+                $payload['Attachments'][$index] = $listValue->requestBody();
+            }
         }
 
         return $payload;
