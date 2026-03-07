@@ -1,10 +1,16 @@
+# v1.0.2
+## 03/06/2026
+
+1. [](#bugfix)
+   * Fixed Symfony contracts and PSR interface conflicts with Grav 1.8
+1. [](#improved)
+   * Updated vendor libs
+
 # v1.0.1
 ## 03/06/2026
 
 1. [](#new)
    * Added support for configurable AWS region for SES
-1. [](#improved)
-   * Updated vendor libs
 
 # v1.0.0
 ## 05/09/2023

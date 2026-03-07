@@ -13,7 +13,6 @@ use AsyncAws\Ses\ValueObject\EmailContent;
 use AsyncAws\Ses\ValueObject\ListManagementOptions;
 use AsyncAws\Ses\ValueObject\Message;
 use AsyncAws\Ses\ValueObject\MessageTag;
-use AsyncAws\Ses\ValueObject\Template;
 
 /**
  * Represents a request to send a single formatted email using Amazon SES. For more information, see the Amazon SES
@@ -91,8 +90,8 @@ final class SendEmailRequest extends Input
     private $feedbackForwardingEmailAddressIdentityArn;
 
     /**
-     * An object that contains the body of the message. You can send either a Simple message Raw message or a template
-     * Message.
+     * An object that contains the body of the message. You can send either a Simple message, Raw message, or a Templated
+     * message.
      *
      * @required
      *
@@ -116,6 +115,23 @@ final class SendEmailRequest extends Input
     private $configurationSetName;
 
     /**
+     * The ID of the multi-region endpoint (global-endpoint).
+     *
+     * @var string|null
+     */
+    private $endpointId;
+
+    /**
+     * The name of the tenant through which this email will be sent.
+     *
+     * > The email sending operation will only succeed if all referenced resources (identities, configuration sets, and
+     * > templates) are associated with this tenant.
+     *
+     * @var string|null
+     */
+    private $tenantName;
+
+    /**
      * An object used to specify a list or topic to which an email belongs, which will be used when a contact chooses to
      * unsubscribe.
      *
@@ -134,6 +150,8 @@ final class SendEmailRequest extends Input
      *   Content?: EmailContent|array,
      *   EmailTags?: null|array<MessageTag|array>,
      *   ConfigurationSetName?: null|string,
+     *   EndpointId?: null|string,
+     *   TenantName?: null|string,
      *   ListManagementOptions?: null|ListManagementOptions|array,
      *   '@region'?: string|null,
      * } $input
@@ -149,6 +167,8 @@ final class SendEmailRequest extends Input
         $this->content = isset($input['Content']) ? EmailContent::create($input['Content']) : null;
         $this->emailTags = isset($input['EmailTags']) ? array_map([MessageTag::class, 'create'], $input['EmailTags']) : null;
         $this->configurationSetName = $input['ConfigurationSetName'] ?? null;
+        $this->endpointId = $input['EndpointId'] ?? null;
+        $this->tenantName = $input['TenantName'] ?? null;
         $this->listManagementOptions = isset($input['ListManagementOptions']) ? ListManagementOptions::create($input['ListManagementOptions']) : null;
         parent::__construct($input);
     }
@@ -164,6 +184,8 @@ final class SendEmailRequest extends Input
      *   Content?: EmailContent|array,
      *   EmailTags?: null|array<MessageTag|array>,
      *   ConfigurationSetName?: null|string,
+     *   EndpointId?: null|string,
+     *   TenantName?: null|string,
      *   ListManagementOptions?: null|ListManagementOptions|array,
      *   '@region'?: string|null,
      * }|SendEmailRequest $input
@@ -194,6 +216,11 @@ final class SendEmailRequest extends Input
     public function getEmailTags(): array
     {
         return $this->emailTags ?? [];
+    }
+
+    public function getEndpointId(): ?string
+    {
+        return $this->endpointId;
     }
 
     public function getFeedbackForwardingEmailAddress(): ?string
@@ -229,13 +256,21 @@ final class SendEmailRequest extends Input
         return $this->replyToAddresses ?? [];
     }
 
+    public function getTenantName(): ?string
+    {
+        return $this->tenantName;
+    }
+
     /**
      * @internal
      */
     public function request(): Request
     {
         // Prepare headers
-        $headers = ['content-type' => 'application/json'];
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ];
 
         // Prepare query
         $query = [];
@@ -278,6 +313,13 @@ final class SendEmailRequest extends Input
     public function setEmailTags(array $value): self
     {
         $this->emailTags = $value;
+
+        return $this;
+    }
+
+    public function setEndpointId(?string $value): self
+    {
+        $this->endpointId = $value;
 
         return $this;
     }
@@ -327,6 +369,13 @@ final class SendEmailRequest extends Input
         return $this;
     }
 
+    public function setTenantName(?string $value): self
+    {
+        $this->tenantName = $value;
+
+        return $this;
+    }
+
     private function requestBody(): array
     {
         $payload = [];
@@ -354,7 +403,7 @@ final class SendEmailRequest extends Input
             $payload['FeedbackForwardingEmailAddressIdentityArn'] = $v;
         }
         if (null === $v = $this->content) {
-            throw new InvalidArgument(sprintf('Missing parameter "Content" for "%s". The value cannot be null.', __CLASS__));
+            throw new InvalidArgument(\sprintf('Missing parameter "Content" for "%s". The value cannot be null.', __CLASS__));
         }
         $payload['Content'] = $v->requestBody();
         if (null !== $v = $this->emailTags) {
@@ -367,6 +416,12 @@ final class SendEmailRequest extends Input
         }
         if (null !== $v = $this->configurationSetName) {
             $payload['ConfigurationSetName'] = $v;
+        }
+        if (null !== $v = $this->endpointId) {
+            $payload['EndpointId'] = $v;
+        }
+        if (null !== $v = $this->tenantName) {
+            $payload['TenantName'] = $v;
         }
         if (null !== $v = $this->listManagementOptions) {
             $payload['ListManagementOptions'] = $v->requestBody();

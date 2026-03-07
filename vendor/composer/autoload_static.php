@@ -7,23 +7,15 @@ namespace Composer\Autoload;
 class ComposerStaticInitc74e79402dee474d35ea8450810da88c
 {
     public static $prefixLengthsPsr4 = array (
-        'S' => 
+        'S' =>
         array (
-            'Symfony\\Contracts\\Service\\' => 26,
-            'Symfony\\Contracts\\HttpClient\\' => 29,
             'Symfony\\Component\\Mailer\\Bridge\\Amazon\\' => 39,
         ),
-        'P' => 
-        array (
-            'Psr\\Log\\' => 8,
-            'Psr\\Container\\' => 14,
-            'Psr\\Cache\\' => 10,
-        ),
-        'G' => 
+        'G' =>
         array (
             'Grav\\Plugin\\EmailAmazon\\' => 24,
         ),
-        'A' => 
+        'A' =>
         array (
             'AsyncAws\\Ses\\' => 13,
             'AsyncAws\\Core\\' => 14,
@@ -31,39 +23,19 @@ class ComposerStaticInitc74e79402dee474d35ea8450810da88c
     );
 
     public static $prefixDirsPsr4 = array (
-        'Symfony\\Contracts\\Service\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/service-contracts',
-        ),
-        'Symfony\\Contracts\\HttpClient\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/http-client-contracts',
-        ),
-        'Symfony\\Component\\Mailer\\Bridge\\Amazon\\' => 
+        'Symfony\\Component\\Mailer\\Bridge\\Amazon\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/amazon-mailer',
         ),
-        'Psr\\Log\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
-        ),
-        'Psr\\Container\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/container/src',
-        ),
-        'Psr\\Cache\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/cache/src',
-        ),
-        'Grav\\Plugin\\EmailAmazon\\' => 
+        'Grav\\Plugin\\EmailAmazon\\' =>
         array (
             0 => __DIR__ . '/../..' . '/classes',
         ),
-        'AsyncAws\\Ses\\' => 
+        'AsyncAws\\Ses\\' =>
         array (
             0 => __DIR__ . '/..' . '/async-aws/ses/src',
         ),
-        'AsyncAws\\Core\\' => 
+        'AsyncAws\\Core\\' =>
         array (
             0 => __DIR__ . '/..' . '/async-aws/core/src',
         ),

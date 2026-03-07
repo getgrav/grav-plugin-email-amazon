@@ -27,21 +27,41 @@ final class Message
     private $body;
 
     /**
+     * The list of message headers that will be added to the email message.
+     *
+     * @var MessageHeader[]|null
+     */
+    private $headers;
+
+    /**
+     * The List of attachments to include in your email. All recipients will receive the same attachments.
+     *
+     * @var Attachment[]|null
+     */
+    private $attachments;
+
+    /**
      * @param array{
      *   Subject: Content|array,
      *   Body: Body|array,
+     *   Headers?: null|array<MessageHeader|array>,
+     *   Attachments?: null|array<Attachment|array>,
      * } $input
      */
     public function __construct(array $input)
     {
         $this->subject = isset($input['Subject']) ? Content::create($input['Subject']) : $this->throwException(new InvalidArgument('Missing required field "Subject".'));
         $this->body = isset($input['Body']) ? Body::create($input['Body']) : $this->throwException(new InvalidArgument('Missing required field "Body".'));
+        $this->headers = isset($input['Headers']) ? array_map([MessageHeader::class, 'create'], $input['Headers']) : null;
+        $this->attachments = isset($input['Attachments']) ? array_map([Attachment::class, 'create'], $input['Attachments']) : null;
     }
 
     /**
      * @param array{
      *   Subject: Content|array,
      *   Body: Body|array,
+     *   Headers?: null|array<MessageHeader|array>,
+     *   Attachments?: null|array<Attachment|array>,
      * }|Message $input
      */
     public static function create($input): self
@@ -49,9 +69,25 @@ final class Message
         return $input instanceof self ? $input : new self($input);
     }
 
+    /**
+     * @return Attachment[]
+     */
+    public function getAttachments(): array
+    {
+        return $this->attachments ?? [];
+    }
+
     public function getBody(): Body
     {
         return $this->body;
+    }
+
+    /**
+     * @return MessageHeader[]
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers ?? [];
     }
 
     public function getSubject(): Content
@@ -69,6 +105,22 @@ final class Message
         $payload['Subject'] = $v->requestBody();
         $v = $this->body;
         $payload['Body'] = $v->requestBody();
+        if (null !== $v = $this->headers) {
+            $index = -1;
+            $payload['Headers'] = [];
+            foreach ($v as $listValue) {
+                ++$index;
+                $payload['Headers'][$index] = $listValue->requestBody();
+            }
+        }
+        if (null !== $v = $this->attachments) {
+            $index = -1;
+            $payload['Attachments'] = [];
+            foreach ($v as $listValue) {
+                ++$index;
+                $payload['Attachments'][$index] = $listValue->requestBody();
+            }
+        }
 
         return $payload;
     }
