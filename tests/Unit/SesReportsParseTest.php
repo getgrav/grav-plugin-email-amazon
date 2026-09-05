@@ -74,7 +74,7 @@ final class SesReportsParseTest extends TestCase
         // in `reject.reason` and names the recipient only in `mail.destination`.
         yield 'reject' => ['reject', [
             'type' => Event::DROPPED,
-            'hard' => null,
+            'hard' => false,
             'email' => 'sender@example.com',
             'reason' => 'Bad content',
             'provider_id' => 'EXAMPLE7c191be45-e9aedb9a-02f9-4d12-a87d-dd0099a07f8a-000000',
@@ -357,6 +357,39 @@ final class SesReportsParseTest extends TestCase
         self::assertSame('jane@example.com', (new SesReports())->parse(self::envelope($record))->events[0]->email);
     }
 
+    /**
+     * A `Reject` is Amazon refusing the message and never the address.
+     *
+     * There is no reason string that could make it the address: SES has no
+     * concept of refusing a send because of the recipient — an address it will
+     * not deliver to bounces, and the account suppression list produces a
+     * permanent bounce with the subtype `Suppressed` rather than a `Reject`.
+     * So `hard` is false whatever Amazon writes in `reject.reason`, and nobody
+     * comes off a mailing list because a virus scanner read an attachment.
+     */
+    public function testARejectIsAlwaysTheMessageAndNeverTheAddress(): void
+    {
+        $reasons = ['Bad content', 'Amazon SES has suppressed sending to this address', ''];
+
+        foreach ($reasons as $why) {
+            $record = (string)json_encode([
+                'eventType' => 'Reject',
+                'mail' => [
+                    'timestamp' => '2026-09-05T09:02:11.000Z',
+                    'messageId' => 'EXAMPLE7c191be45',
+                    'destination' => ['customer@example.net'],
+                ],
+                'reject' => ['reason' => $why],
+            ]);
+
+            $event = (new SesReports())->parse(self::fromRecord($record))->events[0];
+
+            self::assertSame(Event::DROPPED, $event->type);
+            self::assertFalse($event->hard, $why === '' ? 'no reason at all' : $why);
+            self::assertFalse($event->isRefusedAddress(), 'a Reject never suppresses an address');
+        }
+    }
+
     /** A bounce's reason is Amazon's subtype and the receiving server's own words. */
     public function testABouncesReasonIsAmazonsSubtypeAndTheDiagnosticCode(): void
     {
@@ -383,6 +416,12 @@ final class SesReportsParseTest extends TestCase
     private static function request(string $fixture): WebhookRequest
     {
         return new WebhookRequest('POST', '', [], ['content-type' => 'application/json'], self::body($fixture));
+    }
+
+    /** A record written here rather than read from a fixture. */
+    private static function fromRecord(string $body): WebhookRequest
+    {
+        return new WebhookRequest('POST', '', [], ['content-type' => 'application/json'], $body);
     }
 
     /** One SES record wrapped in the SNS envelope it really arrives in. */

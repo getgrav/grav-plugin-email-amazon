@@ -135,6 +135,16 @@ final class SesReports implements DeliveryReports
      * that a drop is the provider's decision about the message rather than a
      * receiving server's about the address.
      *
+     * Its `hard` is **always false**, and there is no reason string that could
+     * change that. Amazon's `Reject` is about content: their own documented
+     * reason is "Bad content", and the case it exists for is a virus their
+     * scanner found in an attachment. SES has no concept of refusing a send
+     * because of the recipient — an address it will not deliver to bounces
+     * instead, and the account-level suppression list produces a `Bounce` with
+     * `Suppressed` on it rather than a `Reject`. So a `Reject` never says
+     * anything about the address, and a store that suppressed on one would take
+     * a subscriber off its list because somebody attached the wrong file.
+     *
      * `send`, `renderingfailure` and `deliverydelay` stay unmapped: the first
      * is Amazon acknowledging it has the message, and the other two are not
      * about a recipient at all.
@@ -318,6 +328,11 @@ final class SesReports implements DeliveryReports
         $hard = null;
         if ($mapped === Event::BOUNCED) {
             $hard = strtolower(trim((string)($bounce['bounceType'] ?? ''))) === 'permanent';
+        }
+
+        if ($mapped === Event::DROPPED) {
+            // Always the message and never the address; see the class note.
+            $hard = false;
         }
 
         $recipients = self::recipients($record, $mapped, $mail);
