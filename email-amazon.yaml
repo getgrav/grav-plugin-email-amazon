@@ -5,3 +5,6 @@ password:
 access_key:
 secret_key:
 region:
+configuration_set:
+sns_topic:
+identity:

@@ -1,7 +1,7 @@
 name: Email Amazon
 slug: email-amazon
 type: plugin
-version: 1.0.3
+version: 1.1.0
 testing: false
 description: Amazon SES integration for new Email plugin
 icon: envelope
@@ -40,6 +40,7 @@ form:
       size: small
       label: Transport
       default: api
+      help: "API is the fastest and sends the parts of a message rather than the message, which means every custom header is left behind - List-Unsubscribe included. Pick HTTPS or SMTP if you send newsletters or anything else that needs its headers to arrive."
       options:
         api: API (fastest)
         https: HTTPS
@@ -66,3 +67,30 @@ form:
       size: small
       label: AWS Region
       placeholder: us-east-1
+
+    delivery_reports:
+      type: section
+      title: Delivery reports
+      underline: true
+      text: "Amazon can tell this site what happened to each message it sent - delivered, bounced, marked as spam, opened, clicked. It does that through an SNS topic rather than a plain webhook, so setting it up means an SES configuration set, an event destination, a topic and a subscription. Anything that asks this plugin to set that up uses the same access key that sends the mail, and the three settings below are the names it uses. There is no signing key to paste: Amazon signs every notification with its own certificate and this plugin checks it."
+
+    configuration_set:
+      type: text
+      size: medium
+      label: Configuration set
+      placeholder: grav-email
+      help: "The SES configuration set that publishes the events. Left empty it is called grav-email, and it is created if there is none by that name."
+
+    sns_topic:
+      type: text
+      size: medium
+      label: SNS topic
+      placeholder: grav-email-events
+      help: "The SNS topic the events are published to. Left empty it is called grav-email-events. A topic that already exists under that name is reused rather than replaced."
+
+    identity:
+      type: text
+      size: medium
+      label: Sending identity
+      placeholder: example.com
+      help: "The verified domain or address you send from, as it appears under Identities in the SES console. Filling this in lets the setup make the configuration set that identity's default, so every message publishes its events with no header to set. Leave it empty and you have to send with an X-SES-CONFIGURATION-SET header yourself. Careful: making it the default affects every message sent from that identity, including mail sent by something other than Grav."
