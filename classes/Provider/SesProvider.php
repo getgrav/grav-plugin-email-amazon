@@ -194,9 +194,9 @@ final class SesProvider implements Provider
     /** Which of the three ways this plugin is set to send. Its own default is the API. */
     public function transport(): string
     {
-        $transport = strtolower(trim((string)($this->config['transport'] ?? self::TRANSPORT_API)));
+        $transport = strtolower(trim((string)($this->config['transport'] ?? self::TRANSPORT_HTTPS)));
 
-        return $transport === '' ? self::TRANSPORT_API : $transport;
+        return $transport === '' ? self::TRANSPORT_HTTPS : $transport;
     }
 
     /**

@@ -54,7 +54,7 @@ final class SesProviderTest extends TestCase
      */
     public function testTheApiTransportSaysItDropsHeaders(): void
     {
-        foreach ([[], ['transport' => 'api'], ['transport' => ''], ['transport' => 'API']] as $config) {
+        foreach ([['transport' => 'api'], ['transport' => 'API'], ['transport' => ' api ']] as $config) {
             $capabilities = (new SesProvider($config))->capabilities();
 
             self::assertFalse($capabilities->customHeaders, 'API transport, custom headers');
@@ -65,9 +65,12 @@ final class SesProviderTest extends TestCase
         }
     }
 
-    /** HTTPS and SMTP send the whole message, so the headers are the message. */
+    /** HTTPS and SMTP send the whole message, so the headers are the message. HTTPS is what an unset transport means. */
     public function testTheOtherTwoTransportsCarryEverything(): void
     {
+        self::assertSame('https', (new SesProvider())->transport(), 'nothing chosen is HTTPS');
+        self::assertSame('https', (new SesProvider(['transport' => '']))->transport(), 'blank is HTTPS');
+
         foreach (['https', 'smtp'] as $transport) {
             $capabilities = (new SesProvider(['transport' => $transport]))->capabilities();
 

@@ -39,11 +39,11 @@ form:
       type: select
       size: small
       label: Transport
-      default: api
-      help: "API is the fastest and sends the parts of a message rather than the message, which means every custom header is left behind - List-Unsubscribe included. Pick HTTPS or SMTP if you send newsletters or anything else that needs its headers to arrive."
+      default: https
+      help: "HTTPS sends the whole message through Amazon's API, so every header arrives, and is the right choice for almost everything. API is a little faster and sends the parts of a message rather than the message, which means every custom header is left behind - List-Unsubscribe included; never use it for newsletters. SMTP is SMTP, with the username and password below."
       options:
-        api: API (fastest)
         https: HTTPS
+        api: API
         smtp: SMTP
 
     username:
@@ -79,7 +79,7 @@ form:
       size: medium
       label: Configuration set
       placeholder: grav-email
-      help: "The SES configuration set that publishes the events. Left empty it is called grav-email, and it is created if there is none by that name."
+      help: "The SES configuration set that publishes the events. Fill it in and this plugin sends every message with an X-SES-CONFIGURATION-SET header naming it, so the events flow whatever the sending identity's default is. Left empty, the setup still creates one called grav-email, but nothing is stamped on the mail, and events only arrive once that set is the identity's default (see below)."
 
     sns_topic:
       type: text
@@ -93,4 +93,4 @@ form:
       size: medium
       label: Sending identity
       placeholder: example.com
-      help: "The verified domain or address you send from, as it appears under Identities in the SES console. Filling this in lets the setup make the configuration set that identity's default, so every message publishes its events with no header to set. Leave it empty and you have to send with an X-SES-CONFIGURATION-SET header yourself. Careful: making it the default affects every message sent from that identity, including mail sent by something other than Grav."
+      help: "The verified domain or address you send from, as it appears under Identities in the SES console. Filling this in lets the setup make the configuration set that identity's default, so mail sent from it by anything at all publishes its events. Not needed when Configuration set above is filled in, because this plugin then names the set on every message itself. Careful: making it the default affects every message sent from that identity, including mail sent by something other than Grav."

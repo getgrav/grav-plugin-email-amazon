@@ -9,6 +9,8 @@
     * The header a send id travels in is now named by the Email plugin rather than by this one, so the end that writes the header and the end that reads it cannot disagree about it. It is `X-Grav-Send-Id`, or whatever `providers.send_header` in the Email plugin's configuration says. The undocumented `send_header` setting this plugin read is gone, and so is its own copy of the header-reading helpers.
     * Added a test suite under `tests/`, run with `composer install -d tests` and `tests/vendor/bin/phpunit`
 1. [](#improved)
+    * The default transport is HTTPS rather than API. Both go through the same Amazon API with the same keys; HTTPS sends the whole message so every custom header arrives, `List-Unsubscribe` included, and API sends the parts of one and leaves the headers behind. A site that saved its settings under the old default keeps `api` until it changes the setting
+    * When `configuration_set` is filled in, every message is sent with an `X-SES-CONFIGURATION-SET` header naming it, on all three transports, so SES publishes its events without the set having to be the identity's default and without every sender remembering the header. A message that already carries the header keeps its own
     * The `ses` engine name is now accepted alongside `amazon`
     * The Transport setting says which of the three drops custom headers, and which do not
 

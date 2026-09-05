@@ -363,8 +363,9 @@ final class SesSetup implements WebhookSetup
         if ($identity === '') {
             return sprintf(
                 'One thing is left: messages only publish events when they are sent with the %s configuration set. '
-                . 'Fill in the sending identity on this page and press the button again to make it the default for '
-                . 'that domain, or set the X-SES-CONFIGURATION-SET header to %s on the mail you send.',
+                . 'Fill in Configuration set on this page as %s and this plugin puts the X-SES-CONFIGURATION-SET '
+                . 'header on every message itself, or fill in the sending identity and press the button again to '
+                . 'make it the default for that domain.',
                 $setName,
                 $setName,
             );

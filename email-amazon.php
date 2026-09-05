@@ -7,6 +7,9 @@ use Grav\Common\Plugin;
 use Grav\Plugin\EmailAmazon\Http\CurlHttp;
 use Grav\Plugin\EmailAmazon\Provider\CertificateStore;
 use Grav\Plugin\EmailAmazon\Provider\SesProvider;
+use Grav\Plugin\EmailAmazon\Transport\ConfigurationSetTransport;
+use Grav\Plugin\EmailAmazon\Transport\SesDsn;
+use Symfony\Component\Mailer\Transport;
 use RocketTheme\Toolbox\Event\Event;
 
 /**
@@ -120,23 +123,33 @@ class EmailAmazonPlugin extends Plugin
         return rtrim($root, '/') . '/' . self::CERTIFICATE_DIRECTORY;
     }
 
+    /**
+     * The transport for the `amazon` engine.
+     *
+     * The DSN is Symfony's `ses+<transport>://` with this plugin's credentials
+     * in it, and the transport it builds is handed back wrapped in
+     * {@see ConfigurationSetTransport}, which stamps the configuration set on
+     * every message so SES publishes its events. The Email plugin has taken a
+     * transport object in place of a DSN string since 4.0.
+     *
+     * With no transport chosen it is HTTPS: the same API as `api`, sending the
+     * whole message rather than its parts, so custom headers arrive — which is
+     * the difference between a newsletter with an unsubscribe button and one
+     * without.
+     */
     public function onEmailTransportDsn(Event $e)
     {
         $engine = $e['engine'];
         if ($engine === 'amazon' || $engine === 'ses') {
-            $options = $this->config->get('plugins.email-amazon');
-            $dsn = "ses+{$options['transport']}://";
-            if ($options['transport'] === 'smtp') {
-                $dsn .= urlencode($options['username'] ?? '') .":".urlencode($options['password'] ?? '');
-            } else {
-                $dsn .= urlencode($options['access_key'] ?? '') .":".urlencode($options['secret_key'] ?? '');
-            }
-            $dsn .= "@default";
-            if (isset($options['region'])) {
-                $dsn .= "?region=" . urlencode($options['region']);
-            }
-            $e['dsn'] = $dsn;
+            $options = (array)$this->config->get('plugins.email-amazon');
+            $dsn = SesDsn::from($options);
+            $set = trim((string)($options['configuration_set'] ?? ''));
+
+            $e['dsn'] = $set === ''
+                ? $dsn
+                : new ConfigurationSetTransport(Transport::fromDsn($dsn), $set);
             $e->stopPropagation();
         }
     }
+
 }

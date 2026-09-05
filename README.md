@@ -26,7 +26,7 @@ Here is the default configuration and an explanation of available options:
 
 ```yaml
 enabled: true
-transport: api
+transport: https
 username:
 password:
 access_key:
@@ -43,9 +43,11 @@ The last three are only used by delivery reports, and there is a section about t
 
 ## Usage
 
-The **transport** can either be `api` (fastest), `https` or `smtp`.  `username` and `password` is used for the `SMTP` option, and `access_key` and `secret_key` is used by `api` and `https`.
+The **transport** can either be `https` (the default), `api` or `smtp`.  `username` and `password` is used for the `SMTP` option, and `access_key` and `secret_key` is used by `api` and `https`.
 
-One thing worth knowing before you pick: the `api` transport builds Amazon's request out of the parts of a message — sender, recipients, subject, text body, HTML body — and sends that. Everything else is left behind, including every custom header and including `List-Unsubscribe`. That is fine for a contact form and it is not fine for a newsletter, because a bulk sender with no unsubscribe button is what a spam filter thinks a spammer looks like. The `https` transport sends exactly the same message through exactly the same API as raw MIME, so the headers arrive; `smtp` is SMTP, where the headers are the first half of the message. If you send anything in bulk, pick `https` or `smtp`.
+One thing worth knowing before you pick: the `api` transport builds Amazon's request out of the parts of a message — sender, recipients, subject, text body, HTML body — and sends that. Everything else is left behind, including every custom header and including `List-Unsubscribe`. That is fine for a contact form and it is not fine for a newsletter, because a bulk sender with no unsubscribe button is what a spam filter thinks a spammer looks like. The `https` transport sends exactly the same message through exactly the same API as raw MIME, so the headers arrive; `smtp` is SMTP, where the headers are the first half of the message. If you send anything in bulk, stay on `https` or pick `smtp`. Before 1.1.0 the default was `api`; a site that saved its settings under that default keeps it until the setting is changed.
+
+When **configuration_set** is filled in, every message goes out with an `X-SES-CONFIGURATION-SET` header naming it, on all three transports, so SES publishes that message's events without the set having to be the sending identity's default.
 
 Once the options are set, all other configuration regarding email should be done in the main `email` plugin.  You just need to set the engine in the `email.yaml` configuration:
 
