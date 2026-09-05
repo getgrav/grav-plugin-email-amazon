@@ -1,0 +1,8 @@
+.DS_Store
+.phpunit.cache/
+
+# The test harness installs into its own vendor directory so that the vendor
+# directory shipped with the plugin keeps holding only what the Symfony bridge
+# needs.
+tests/vendor/
+tests/composer.lock

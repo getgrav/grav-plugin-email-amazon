@@ -1,3 +1,15 @@
+# v1.1.0
+## 09/05/2026
+
+1. [](#new)
+    * Added a provider for the Email plugin's provider contract, so everything this plugin knows about SES now lives here: how Amazon's delivery notifications are verified and read, what a sending domain's DNS has to say, and what each of the three transports does to a custom header on the way out
+    * Added one-button setup for delivery reports - the SNS topic, its policy, the subscription, the configuration set and the event destination, all created with the access key that already sends the mail
+    * Added `configuration_set`, `sns_topic` and `identity` settings, used only by delivery reports
+    * Added a test suite under `tests/`, run with `composer install -d tests` and `tests/vendor/bin/phpunit`
+1. [](#improved)
+    * The `ses` engine name is now accepted alongside `amazon`
+    * The Transport setting says which of the three drops custom headers, and which do not
+
 # v1.0.3
 ## 05/01/2026
 
