@@ -5,6 +5,8 @@
     * Added a provider for the Email plugin's provider contract, so everything this plugin knows about SES now lives here: how Amazon's delivery notifications are verified and read, what a sending domain's DNS has to say, and what each of the three transports does to a custom header on the way out
     * Added one-button setup for delivery reports - the SNS topic, its policy, the subscription, the configuration set and the event destination, all created with the access key that already sends the mail
     * Added `configuration_set`, `sns_topic` and `identity` settings, used only by delivery reports
+    * SES's `Reject` is now reported, as the contract's `dropped`. It is Amazon taking the message, deciding it will not put it on the wire — a virus, usually, and its own words for that are "Bad content" — and never handing it to a receiving server. It was previously read and skipped. It is not a bounce, and reporting it as one would have said a receiving server refused an address when nothing of the sort happened, so it gets the word the contract has for exactly this.
+    * The header a send id travels in is now named by the Email plugin rather than by this one, so the end that writes the header and the end that reads it cannot disagree about it. It is `X-Grav-Send-Id`, or whatever `providers.send_header` in the Email plugin's configuration says. The undocumented `send_header` setting this plugin read is gone, and so is its own copy of the header-reading helpers.
     * Added a test suite under `tests/`, run with `composer install -d tests` and `tests/vendor/bin/phpunit`
 1. [](#improved)
     * The `ses` engine name is now accepted alongside `amazon`

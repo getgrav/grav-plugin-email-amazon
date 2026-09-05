@@ -155,7 +155,7 @@ final class SesProvider implements Provider
 
     public function reports(): ?DeliveryReports
     {
-        return new SesReports($this->certificates, $this->http, $this->sendHeader());
+        return new SesReports($this->certificates, $this->http);
     }
 
     public function setup(): ?WebhookSetup
@@ -197,14 +197,6 @@ final class SesProvider implements Provider
         $transport = strtolower(trim((string)($this->config['transport'] ?? self::TRANSPORT_API)));
 
         return $transport === '' ? self::TRANSPORT_API : $transport;
-    }
-
-    /** The header a store stamps its send id into, from the config or the default. */
-    private function sendHeader(): string
-    {
-        $header = trim((string)($this->config['send_header'] ?? ''));
-
-        return $header === '' ? SendHeader::DEFAULT_HEADER : $header;
     }
 
     /**

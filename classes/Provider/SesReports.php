@@ -7,6 +7,7 @@ namespace Grav\Plugin\EmailAmazon\Provider;
 use Grav\Plugin\Email\Providers\DeliveryReports;
 use Grav\Plugin\Email\Providers\Event;
 use Grav\Plugin\Email\Providers\Payload;
+use Grav\Plugin\Email\Providers\SendHeader;
 use Grav\Plugin\Email\Providers\Verdict;
 use Grav\Plugin\Email\Providers\WebhookRequest;
 use Grav\Plugin\EmailAmazon\Http\Http;
@@ -124,13 +125,29 @@ final class SesReports implements DeliveryReports
      */
     public const HOST_PATTERN = '/^sns\.[a-z0-9\-]+\.amazonaws\.com(\.cn)?$/i';
 
-    /** @var array<string, string> Amazon's event names to the contract's */
+    /**
+     * Amazon's event names to the contract's.
+     *
+     * `reject` is SES refusing to send at all: it took the message, decided it
+     * carried a virus or something else it will not put on the wire, and no
+     * receiving server ever saw it. That is {@see Event::DROPPED} and not a
+     * bounce, and the difference matters — whatever records these events knows
+     * that a drop is the provider's decision about the message rather than a
+     * receiving server's about the address.
+     *
+     * `send`, `renderingfailure` and `deliverydelay` stay unmapped: the first
+     * is Amazon acknowledging it has the message, and the other two are not
+     * about a recipient at all.
+     *
+     * @var array<string, string>
+     */
     public const TYPES = [
         'delivery' => Event::DELIVERED,
         'bounce' => Event::BOUNCED,
         'complaint' => Event::COMPLAINED,
         'open' => Event::OPENED,
         'click' => Event::CLICKED,
+        'reject' => Event::DROPPED,
     ];
 
     /** The complaint that means the opposite of a complaint. */
@@ -139,28 +156,20 @@ final class SesReports implements DeliveryReports
     /** @var (callable(string): (string|null)) */
     private $fetch;
 
-    private readonly string $sendHeader;
-
     /**
      * @param CertificateStore|null $certificates where Amazon's signing
      *        certificates are kept; null makes every signature refuse, which is
      *        what a store with nowhere to write should get
      * @param Http|null $http how a certificate is fetched; null makes every
      *        signature refuse, which is what a store with no cURL should get
-     * @param string|null $sendHeader the header the store stamps its send id
-     *        into; null is {@see SendHeader::DEFAULT_HEADER}
      */
     public function __construct(
         private readonly ?CertificateStore $certificates = null,
         ?Http $http = null,
-        ?string $sendHeader = null,
     ) {
         $this->fetch = $http === null
             ? static fn (): ?string => null
             : static fn (string $url): ?string => $http->get($url);
-
-        $header = trim((string)$sendHeader);
-        $this->sendHeader = $header === '' ? SendHeader::DEFAULT_HEADER : $header;
     }
 
     /**
@@ -168,9 +177,9 @@ final class SesReports implements DeliveryReports
      *
      * @param callable(string): (string|null) $fetch
      */
-    public static function fetchingWith(?CertificateStore $certificates, callable $fetch, ?string $sendHeader = null): self
+    public static function fetchingWith(?CertificateStore $certificates, callable $fetch): self
     {
-        $reports = new self($certificates, null, $sendHeader);
+        $reports = new self($certificates);
         $reports->fetch = $fetch;
 
         return $reports;
@@ -192,7 +201,7 @@ final class SesReports implements DeliveryReports
 
     public function sendHeader(): string
     {
-        return $this->sendHeader;
+        return SendHeader::name();
     }
 
     public function verify(WebhookRequest $request, array $config): Verdict
@@ -312,9 +321,8 @@ final class SesReports implements DeliveryReports
         }
 
         $recipients = self::recipients($record, $mapped, $mail);
-        $messageId = SendHeader::inList($headers, 'Message-ID');
-        $sendId = SendHeader::inList($headers, $this->sendHeader)
-            ?? SendHeader::inTags($mail['tags'] ?? null, $this->sendHeader);
+        $messageId = SendHeader::headerInList($headers, 'Message-ID');
+        $sendId = SendHeader::idInList($headers) ?? SendHeader::idInTags($mail['tags'] ?? null);
         $at = Moment::parse(
             $bounce['timestamp']
             ?? $complaint['timestamp']
@@ -324,7 +332,7 @@ final class SesReports implements DeliveryReports
             ?? ($mail['timestamp'] ?? null)
         ) ?? 0;
 
-        $reason = self::reason($bounce, $complaint, $mapped);
+        $reason = self::reason($bounce, $complaint, $record['reject'] ?? null, $mapped);
         $providerId = trim((string)($mail['messageId'] ?? ''));
 
         $events = [];
@@ -492,8 +500,16 @@ final class SesReports implements DeliveryReports
      * @param array<string, mixed> $bounce
      * @param array<string, mixed> $complaint
      */
-    private static function reason(array $bounce, array $complaint, string $type): ?string
+    private static function reason(array $bounce, array $complaint, mixed $reject, string $type): ?string
     {
+        if ($type === Event::DROPPED) {
+            // Amazon's own words, and they are short: "Bad content" is what a
+            // virus rejection says.
+            $why = \is_array($reject) ? trim((string)($reject['reason'] ?? '')) : '';
+
+            return $why === '' ? 'refused by Amazon SES before it was sent' : $why;
+        }
+
         if ($type === Event::BOUNCED) {
             $subType = trim((string)($bounce['bounceSubType'] ?? ''));
             $first = $bounce['bouncedRecipients'][0] ?? null;

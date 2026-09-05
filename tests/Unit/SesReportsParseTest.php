@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Grav\Plugin\EmailAmazon\Tests\Unit;
 
 use Grav\Plugin\Email\Providers\Event;
+use Grav\Plugin\Email\Providers\SendHeader;
 use Grav\Plugin\Email\Providers\WebhookRequest;
-use Grav\Plugin\EmailAmazon\Provider\SendHeader;
 use Grav\Plugin\EmailAmazon\Provider\SesReports;
 use PHPUnit\Framework\TestCase;
 
@@ -70,6 +70,16 @@ final class SesReportsParseTest extends TestCase
         yield 'open' => ['open', ['type' => Event::OPENED]];
         yield 'click' => ['click', ['type' => Event::CLICKED]];
 
+        // SES refusing to send at all. Amazon's own sample carries its reason
+        // in `reject.reason` and names the recipient only in `mail.destination`.
+        yield 'reject' => ['reject', [
+            'type' => Event::DROPPED,
+            'hard' => null,
+            'email' => 'sender@example.com',
+            'reason' => 'Bad content',
+            'provider_id' => 'EXAMPLE7c191be45-e9aedb9a-02f9-4d12-a87d-dd0099a07f8a-000000',
+        ]];
+
         // The same bounce inside the SNS envelope it really arrives in, which
         // is two JSON decodes rather than one.
         yield 'bounce inside an SNS envelope' => ['sns-bounce', [
@@ -118,14 +128,14 @@ final class SesReportsParseTest extends TestCase
     /**
      * An event type this does not act on is a note, not a refusal.
      *
-     * SES sends more than the five that are read here — `Send`, `Reject`,
+     * SES sends more than the six that are read here — `Send`,
      * `Rendering Failure`, `DeliveryDelay` — and a merchant who ticked every
      * box in the console should get a quiet log line rather than a refusal that
      * Amazon then retries.
      */
     public function testAnEventTypeThisDoesNotActOnIsSkippedRatherThanRefused(): void
     {
-        foreach (['send', 'reject', 'rendering-failure', 'delivery-delay'] as $fixture) {
+        foreach (['send', 'rendering-failure', 'delivery-delay'] as $fixture) {
             $payload = (new SesReports())->parse(self::request($fixture));
 
             self::assertTrue($payload->isEmpty(), $fixture . ' should be skipped');
@@ -269,7 +279,7 @@ final class SesReportsParseTest extends TestCase
                 'commonHeaders' => ['messageId' => 'amazons-own-id'],
                 'headers' => [
                     ['name' => 'Message-ID', 'value' => '<nl-3-41-abcd@example.com>'],
-                    ['name' => 'x-kahunacart-send', 'value' => '41'],
+                    ['name' => 'x-grav-send-id', 'value' => '41'],
                 ],
             ],
             'delivery' => ['timestamp' => '2026-09-04T10:00:05.000Z', 'recipients' => ['a@example.com']],
@@ -294,7 +304,7 @@ final class SesReportsParseTest extends TestCase
                 'timestamp' => '2026-09-04T10:00:00.000Z',
                 'destination' => ['a@example.com'],
                 'headersTruncated' => true,
-                'tags' => ['X-KahunaCart-Send' => ['77']],
+                'tags' => ['X-Grav-Send-Id' => ['77']],
             ],
             'delivery' => ['timestamp' => '2026-09-04T10:00:05.000Z', 'recipients' => ['a@example.com']],
         ]);
@@ -302,8 +312,14 @@ final class SesReportsParseTest extends TestCase
         self::assertSame('77', (new SesReports())->parse(self::envelope($record))->events[0]->sendId);
     }
 
-    /** A store that names its own header gets its own header read back. */
-    public function testAStoreCanNameItsOwnSendHeader(): void
+    /**
+     * A site that names its own header gets its own header read back.
+     *
+     * The name is the Email plugin's to answer, not this plugin's, so nothing
+     * here has a header of its own to configure — naming it once names it for
+     * the end that writes the header as well as the end that reads it.
+     */
+    public function testASiteCanNameItsOwnSendHeader(): void
     {
         $record = (string)json_encode([
             'eventType' => 'Delivery',
@@ -315,11 +331,18 @@ final class SesReportsParseTest extends TestCase
             'delivery' => ['timestamp' => '2026-09-04T10:00:05.000Z', 'recipients' => ['a@example.com']],
         ]);
 
-        $reports = new SesReports(null, null, 'X-Shop-Send');
+        $reports = new SesReports();
 
-        self::assertSame('X-Shop-Send', $reports->sendHeader());
-        self::assertSame('abc-123', $reports->parse(self::envelope($record))->events[0]->sendId);
-        self::assertSame(SendHeader::DEFAULT_HEADER, (new SesReports())->sendHeader());
+        self::assertSame(SendHeader::DEFAULT_NAME, $reports->sendHeader());
+
+        SendHeader::override('X-Shop-Send');
+
+        try {
+            self::assertSame('X-Shop-Send', $reports->sendHeader());
+            self::assertSame('abc-123', $reports->parse(self::envelope($record))->events[0]->sendId);
+        } finally {
+            SendHeader::override(null);
+        }
     }
 
     /** An address arriving as `Name <addr>` is the same person as `addr`. */
@@ -342,11 +365,11 @@ final class SesReportsParseTest extends TestCase
         self::assertSame('General: smtp; 550 5.1.1 user unknown', $event->reason);
     }
 
-    /** The five event types Amazon can report, and nothing invented beside them. */
+    /** The six event types Amazon can report, and nothing invented beside them. */
     public function testItSaysWhichEventsAmazonCanReport(): void
     {
         self::assertSame(
-            [Event::DELIVERED, Event::BOUNCED, Event::COMPLAINED, Event::OPENED, Event::CLICKED],
+            [Event::DELIVERED, Event::BOUNCED, Event::COMPLAINED, Event::OPENED, Event::CLICKED, Event::DROPPED],
             (new SesReports())->events(),
         );
 

@@ -64,7 +64,7 @@ region: us-east-1
 
 ## Delivery reports
 
-Amazon can tell your site what happened to each message it sent — delivered, bounced, marked as spam, opened, clicked — and this plugin knows how to read those reports and how to set them up. What you get once it is working is a site that can suppress an address the moment it hard-bounces, show which campaign a complaint came from, and stop sending to a mailbox that no longer exists.
+Amazon can tell your site what happened to each message it sent — delivered, bounced, marked as spam, opened, clicked, and rejected before it ever left — and this plugin knows how to read those reports and how to set them up. What you get once it is working is a site that can suppress an address the moment it hard-bounces, show which campaign a complaint came from, and stop sending to a mailbox that no longer exists.
 
 You need an Email plugin new enough to have the provider contract (5.0.9 or later) and something on the site that asks for it — the KahunaCart newsletter add-on is the one that does today. Without either, this plugin sends mail exactly as it always has and none of the rest of this section applies.
 
