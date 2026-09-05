@@ -132,6 +132,7 @@ final class SesProvider implements Provider
                 customHeaders: false,
                 unsubscribeHeaders: false,
                 echoesHeaders: false,
+                signsWebhooks: true,
                 echoNote: 'This plugin is set to the API transport, which sends the parts of a message rather than '
                     . 'the message, so every custom header is left behind — List-Unsubscribe included. Switch the '
                     . 'Transport setting on this plugin to HTTPS or SMTP to send the whole message.',
@@ -142,6 +143,9 @@ final class SesProvider implements Provider
             customHeaders: true,
             unsubscribeHeaders: true,
             echoesHeaders: true,
+            // SNS signs every notification with a certificate it publishes; the
+            // merchant pastes no key, so a screen cannot work this out from keys.
+            signsWebhooks: true,
             echoNote: 'SES hands headers back in mail.headers on every event-publishing notification. A feedback '
                 . 'notification sent straight from a verified identity carries them only once "Include original '
                 . 'email headers" is ticked on that identity, once per feedback type, on the identity\'s page in '
