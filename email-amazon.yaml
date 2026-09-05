@@ -1,7 +1,10 @@
 enabled: true
-transport: api
+transport: https
 username:
 password:
 access_key:
 secret_key:
 region:
+configuration_set:
+sns_topic:
+identity:
