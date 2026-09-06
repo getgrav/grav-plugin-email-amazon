@@ -29,7 +29,9 @@ use Grav\Plugin\EmailAmazon\Aws\AwsAnswer;
  *    and only for events from this account.
  * 3. The store's **URL is subscribed** to the topic over HTTPS. Amazon then
  *    posts a `SubscriptionConfirmation` to it, which {@see SesReports} reads
- *    and the caller confirms; nothing else arrives until it has.
+ *    and the caller confirms; nothing else arrives until it has. A
+ *    subscription this store left on the topic under an older secret is
+ *    unsubscribed here, since an SNS subscription's endpoint cannot be edited.
  * 4. A **configuration set** exists, created when there is none.
  * 5. An **event destination** on that configuration set points at the topic
  *    for the event types asked for, updated in place when one is already there
@@ -103,7 +105,8 @@ final class SesSetup implements WebhookSetup
     public function permissionsNeeded(): string
     {
         return 'The access key needs an IAM policy allowing sns:CreateTopic, sns:GetTopicAttributes, '
-            . 'sns:SetTopicAttributes, sns:Subscribe and sns:ListSubscriptionsByTopic on the topic, plus '
+            . 'sns:SetTopicAttributes, sns:Subscribe, sns:ListSubscriptionsByTopic and sns:Unsubscribe on the '
+            . 'topic, plus '
             . 'ses:GetConfigurationSet, ses:CreateConfigurationSet, ses:GetConfigurationSetEventDestinations, '
             . 'ses:CreateConfigurationSetEventDestination and ses:UpdateConfigurationSetEventDestination. '
             . 'Naming a sending identity also needs ses:PutEmailIdentityConfigurationSetAttributes, and reading '
@@ -172,14 +175,21 @@ final class SesSetup implements WebhookSetup
             return $note;
         }
 
-        return SetupResult::ok(
+        $sentences = [
             sprintf(
-                'Delivery reports are set up. %s publishes to the SNS topic %s, which posts to this store. %s %s',
+                'Delivery reports are set up. %s publishes to the SNS topic %s, which posts to this store.',
                 $setName,
                 $topicName,
-                $subscription === '' ? 'This address was already subscribed to the topic.' : 'Amazon will post a subscription confirmation to this address within a minute or two and events start after that.',
-                $note,
             ),
+            $subscription['note'],
+            $subscription['already']
+                ? 'This address was already subscribed to the topic.'
+                : 'Amazon will post a subscription confirmation to this address within a minute or two and events start after that.',
+            $note,
+        ];
+
+        return SetupResult::ok(
+            implode(' ', array_filter($sentences, static fn (string $sentence): bool => $sentence !== '')),
             $topicArn,
         );
     }
@@ -249,25 +259,86 @@ final class SesSetup implements WebhookSetup
     }
 
     /**
-     * Subscribe the store's URL, unless it is already there.
+     * Subscribe the store's URL, unless it is already there, and take off any
+     * subscription this store left behind under an older secret.
      *
-     * @return SetupResult|string a failure, or the new subscription ARN, or an
-     *         empty string when this address was already subscribed
+     * An SNS subscription cannot be edited — there is no call that changes an
+     * endpoint — so a changed secret means unsubscribing the old address and
+     * subscribing the new one. A subscription still showing
+     * `PendingConfirmation` has no ARN to unsubscribe with and Amazon deletes
+     * it itself after three days, so it is named rather than acted on.
+     *
+     * A refused `Unsubscribe` is not a refused setup, for the same reason a
+     * refused listing is not: the store still ends up subscribed, and the
+     * leftover is something the merchant is told about rather than blocked by.
+     *
+     * @return SetupResult|array{already: bool, arn: string, note: string} a
+     *         failure, or what happened, for the sentence at the end
      */
-    private function subscribe(AwsApi $api, string $topicArn, string $url): SetupResult|string
+    private function subscribe(AwsApi $api, string $topicArn, string $url): SetupResult|array
     {
         $existing = $api->sns('ListSubscriptionsByTopic', ['TopicArn' => $topicArn]);
+
+        $already = false;
+        $stale = [];
+        $pending = false;
 
         // A key that may subscribe but may not list is a perfectly ordinary
         // policy, and refusing here would be refusing over a check rather than
         // over the work. So a refused listing costs the duplicate check and
         // nothing else.
         if ($existing->ok) {
+            $endpoint = self::endpointOf($url);
+
             foreach ((array)($existing->data['Subscriptions'] ?? []) as $row) {
-                if (\is_array($row) && trim((string)($row['Endpoint'] ?? '')) === $url) {
-                    return '';
+                if (!\is_array($row)) {
+                    continue;
                 }
+
+                $at = trim((string)($row['Endpoint'] ?? ''));
+
+                if ($at === $url) {
+                    $already = true;
+
+                    continue;
+                }
+
+                // Under this store's own endpoint and not at its address: this
+                // store subscribed before the secret changed. Nobody else's
+                // address can be under that endpoint.
+                if ($endpoint === '' || !str_starts_with($at, $endpoint)) {
+                    continue;
+                }
+
+                $arn = trim((string)($row['SubscriptionArn'] ?? ''));
+
+                if ($arn === '' || !str_starts_with($arn, 'arn:')) {
+                    $pending = true;
+
+                    continue;
+                }
+
+                $stale[] = $arn;
             }
+        }
+
+        $removed = 0;
+        $refused = false;
+
+        foreach ($stale as $arn) {
+            if ($api->sns('Unsubscribe', ['SubscriptionArn' => $arn])->ok) {
+                $removed++;
+
+                continue;
+            }
+
+            $refused = true;
+        }
+
+        $note = self::tidiedUp($removed, $refused, $pending);
+
+        if ($already) {
+            return ['already' => true, 'arn' => '', 'note' => $note];
         }
 
         $answer = $api->sns('Subscribe', [
@@ -277,7 +348,37 @@ final class SesSetup implements WebhookSetup
             'ReturnSubscriptionArn' => 'true',
         ]);
 
-        return $answer->ok ? $answer->string('SubscriptionArn') : self::refused('subscribe this store to the SNS topic', $answer);
+        return $answer->ok
+            ? ['already' => false, 'arn' => $answer->string('SubscriptionArn'), 'note' => $note]
+            : self::refused('subscribe this store to the SNS topic', $answer);
+    }
+
+    /**
+     * What to say about the subscriptions this store had left on the topic
+     * under an older secret, if any.
+     */
+    private static function tidiedUp(int $removed, bool $refused, bool $pending): string
+    {
+        $sentences = [];
+
+        if ($removed > 0) {
+            $sentences[] = $removed === 1
+                ? 'Amazon had this store subscribed to the topic with an older secret, and that subscription has been removed.'
+                : sprintf('Amazon had this store subscribed to the topic at %d older addresses, and those subscriptions have been removed.', $removed);
+        }
+
+        if ($refused) {
+            $sentences[] = 'A subscription this store had on the topic with an older secret could not be removed, '
+                . 'because this key is not allowed to do sns:Unsubscribe. Add that action to the key and press this '
+                . 'again, or remove the subscription in the SNS console.';
+        }
+
+        if ($pending) {
+            $sentences[] = 'A subscription this store had with an older secret is still waiting to be confirmed, and '
+                . 'Amazon will not let one of those be removed. It goes on its own after three days.';
+        }
+
+        return implode(' ', $sentences);
     }
 
     /** @return SetupResult|null null when the set is there or was created */
@@ -416,6 +517,17 @@ final class SesSetup implements WebhookSetup
         $parts = explode(':', $arn);
 
         return trim($parts[4] ?? '');
+    }
+
+    /**
+     * The address without its secret: everything up to and including the last
+     * slash. Two addresses that share it belong to the same store.
+     */
+    private static function endpointOf(string $url): string
+    {
+        $cut = strrpos($url, '/');
+
+        return $cut === false || $cut < \strlen('https://x/') ? '' : substr($url, 0, $cut + 1);
     }
 
     /** @param array<string, mixed> $config */

@@ -1,3 +1,9 @@
+# v1.1.1
+## 09/05/2026
+
+1. [](#bugfix)
+    * **Set up now clears away a subscription whose address has changed.** A store that generated a new secret, or lost its settings, was subscribed to the SNS topic twice: once at the old address, which answers 404, and once at the new one. An SNS subscription's endpoint cannot be edited, so Set up now unsubscribes the old one before subscribing the new. A subscription still waiting to be confirmed is left alone and said plainly, since Amazon will not remove one of those and drops it itself after three days. The access key needs `sns:Unsubscribe` for this; without it the store is still subscribed and the message names the action to add.
+
 # v1.1.0
 ## 09/05/2026
 
