@@ -138,6 +138,118 @@ final class SesSetupTest extends TestCase
         }
     }
 
+    /**
+     * A subscription this store left under an older secret is unsubscribed
+     * before the new address is subscribed.
+     *
+     * An SNS subscription's endpoint cannot be edited — there is no call for it
+     * — so the old one has to go, or the topic keeps posting at an address that
+     * answers 404 and the merchant is left counting subscriptions in the
+     * console.
+     */
+    public function testASubscriptionOnAnOlderSecretIsRemovedBeforeTheNewOneIsMade(): void
+    {
+        $old = 'arn:aws:sns:us-east-1:123456789012:grav-email-events:1111';
+
+        $http = (new FakeHttp())
+            ->answer('Action=CreateTopic', 200, self::createTopicXml())
+            ->answer('Action=GetTopicAttributes', 200, self::attributesXml(self::defaultPolicy()))
+            ->answer('Action=SetTopicAttributes', 200, self::plainXml('SetTopicAttributes'))
+            ->answer('Action=ListSubscriptionsByTopic', 200, self::subscriptionsXmlFor([
+                'https://somebody.else/' => 'arn:aws:sns:us-east-1:123456789012:grav-email-events:9999',
+                'https://shop.example.com/newsletter/webhook/ses/the-old-secret' => $old,
+            ]))
+            ->answer('Action=Unsubscribe', 200, self::plainXml('Unsubscribe'))
+            ->answer('Action=Subscribe', 200, self::subscribeXml())
+            ->answer('GET https://email.us-east-1.amazonaws.com/v2/email/configuration-sets/grav-email', 200, [])
+            ->answer('/event-destinations', 200, ['EventDestinations' => []])
+            ->answer('POST https://email', 200, []);
+
+        $result = self::wiring($http)->create(self::URL, [Event::BOUNCED], self::config());
+
+        self::assertTrue($result->ok, $result->message);
+        self::assertStringContainsString('older secret', $result->message);
+        self::assertStringContainsString('has been removed', $result->message);
+
+        $unsubscribed = [];
+        $subscribed = [];
+        foreach ($http->requests as $request) {
+            parse_str($request['body'], $fields);
+
+            if (($fields['Action'] ?? '') === 'Unsubscribe') {
+                $unsubscribed[] = (string)$fields['SubscriptionArn'];
+            }
+
+            if (($fields['Action'] ?? '') === 'Subscribe') {
+                $subscribed[] = (string)$fields['Endpoint'];
+            }
+        }
+
+        self::assertSame([$old], $unsubscribed, 'somebody else\'s subscription is not this plugin\'s to remove');
+        self::assertSame([self::URL], $subscribed);
+    }
+
+    /**
+     * A key that may not unsubscribe still gets the store subscribed, and is
+     * told in plain words what to add.
+     *
+     * The leftover subscription posts at an address that answers 404 and breaks
+     * nothing, so refusing the whole setup over it would leave a merchant with
+     * working delivery reports and a red message.
+     */
+    public function testAKeyThatCannotUnsubscribeSaysSoAndCarriesOn(): void
+    {
+        $http = (new FakeHttp())
+            ->answer('Action=CreateTopic', 200, self::createTopicXml())
+            ->answer('Action=GetTopicAttributes', 200, self::attributesXml(self::defaultPolicy()))
+            ->answer('Action=SetTopicAttributes', 200, self::plainXml('SetTopicAttributes'))
+            ->answer('Action=ListSubscriptionsByTopic', 200, self::subscriptionsXml(
+                'https://shop.example.com/newsletter/webhook/ses/the-old-secret'
+            ))
+            ->answer('Action=Unsubscribe', 403, self::errorXml(
+                'AuthorizationError',
+                'User: arn:aws:iam::123456789012:user/grav is not authorized to perform: SNS:Unsubscribe',
+            ))
+            ->answer('Action=Subscribe', 200, self::subscribeXml())
+            ->answer('GET https://email.us-east-1.amazonaws.com/v2/email/configuration-sets/grav-email', 200, [])
+            ->answer('/event-destinations', 200, ['EventDestinations' => []])
+            ->answer('POST https://email', 200, []);
+
+        $result = self::wiring($http)->create(self::URL, [Event::BOUNCED], self::config());
+
+        self::assertTrue($result->ok, $result->message);
+        self::assertStringContainsString('older secret', $result->message);
+        self::assertStringContainsString('sns:Unsubscribe', $result->message);
+        self::assertTrue($http->sent('Action=Subscribe'), 'the store is still subscribed');
+    }
+
+    /**
+     * A subscription still waiting to be confirmed is named rather than acted
+     * on, because Amazon gives it no ARN to unsubscribe with and deletes it
+     * itself after three days.
+     */
+    public function testAnUnconfirmedOlderSubscriptionIsSaidRatherThanRemoved(): void
+    {
+        $http = (new FakeHttp())
+            ->answer('Action=CreateTopic', 200, self::createTopicXml())
+            ->answer('Action=GetTopicAttributes', 200, self::attributesXml(self::defaultPolicy()))
+            ->answer('Action=SetTopicAttributes', 200, self::plainXml('SetTopicAttributes'))
+            ->answer('Action=ListSubscriptionsByTopic', 200, self::subscriptionsXmlFor([
+                'https://shop.example.com/newsletter/webhook/ses/the-old-secret' => 'PendingConfirmation',
+            ]))
+            ->answer('Action=Subscribe', 200, self::subscribeXml())
+            ->answer('GET https://email.us-east-1.amazonaws.com/v2/email/configuration-sets/grav-email', 200, [])
+            ->answer('/event-destinations', 200, ['EventDestinations' => []])
+            ->answer('POST https://email', 200, []);
+
+        $result = self::wiring($http)->create(self::URL, [Event::BOUNCED], self::config());
+
+        self::assertTrue($result->ok, $result->message);
+        self::assertFalse($http->sent('Action=Unsubscribe'), 'Amazon will not remove one of those');
+        self::assertStringContainsString('waiting to be confirmed', $result->message);
+        self::assertTrue($http->sent('Action=Subscribe'));
+    }
+
     /** A configuration set that is not there yet is created. */
     public function testAMissingConfigurationSetIsCreated(): void
     {
@@ -300,6 +412,7 @@ final class SesSetupTest extends TestCase
             'sns:CreateTopic',
             'sns:SetTopicAttributes',
             'sns:Subscribe',
+            'sns:Unsubscribe',
             'ses:CreateConfigurationSet',
             'ses:CreateConfigurationSetEventDestination',
             'ses:PutEmailIdentityConfigurationSetAttributes',
@@ -364,13 +477,26 @@ final class SesSetupTest extends TestCase
 
     private static function subscriptionsXml(string $endpoint): string
     {
+        return self::subscriptionsXmlFor([
+            $endpoint => 'arn:aws:sns:us-east-1:123456789012:grav-email-events:abcd',
+        ]);
+    }
+
+    /** @param array<string, string> $members endpoint => subscription ARN */
+    private static function subscriptionsXmlFor(array $members): string
+    {
+        $rows = '';
+        foreach ($members as $endpoint => $arn) {
+            $rows .= '<member>'
+                . '<TopicArn>' . self::TOPIC . '</TopicArn>'
+                . '<Protocol>https</Protocol>'
+                . '<SubscriptionArn>' . $arn . '</SubscriptionArn>'
+                . '<Endpoint>' . $endpoint . '</Endpoint>'
+                . '</member>';
+        }
+
         return '<ListSubscriptionsByTopicResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">'
-            . '<ListSubscriptionsByTopicResult><Subscriptions><member>'
-            . '<TopicArn>' . self::TOPIC . '</TopicArn>'
-            . '<Protocol>https</Protocol>'
-            . '<SubscriptionArn>arn:aws:sns:us-east-1:123456789012:grav-email-events:abcd</SubscriptionArn>'
-            . '<Endpoint>' . $endpoint . '</Endpoint>'
-            . '</member></Subscriptions></ListSubscriptionsByTopicResult>'
+            . '<ListSubscriptionsByTopicResult><Subscriptions>' . $rows . '</Subscriptions></ListSubscriptionsByTopicResult>'
             . '</ListSubscriptionsByTopicResponse>';
     }
 

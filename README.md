@@ -76,7 +76,7 @@ Whatever asks for it hands this plugin a webhook address and presses a button. S
 
 1. An SNS topic is created, or the one already called `grav-email-events` is reused.
 2. That topic's policy is changed so SES is allowed to publish to it. This is the step everybody forgets by hand, and when it is missing SES accepts everything else, reports success, and publishes nothing at all.
-3. Your webhook address is subscribed to the topic over HTTPS. Amazon posts a confirmation to it within a minute or two and your site answers it; nothing else arrives until it has.
+3. Your webhook address is subscribed to the topic over HTTPS. Amazon posts a confirmation to it within a minute or two and your site answers it; nothing else arrives until it has. If your address has changed since — a new secret, or a store that lost its settings — the subscription it had before is removed first, because an SNS subscription's endpoint cannot be edited; one still waiting to be confirmed is left where it is, since Amazon will not remove those and drops them itself after three days.
 4. An SES configuration set is created, or the one already named is reused.
 5. An event destination on that configuration set is pointed at the topic, for the event types that were asked for.
 6. If you filled in **Sending identity**, that configuration set becomes the identity's default, so every message from that domain publishes its events with no header to set.
@@ -87,7 +87,7 @@ Step six is the only one with an effect outside Grav, and it is worth reading tw
 
 Set on the key's own user or role under IAM, not in SES:
 
-`sns:CreateTopic`, `sns:GetTopicAttributes`, `sns:SetTopicAttributes`, `sns:Subscribe`, `sns:ListSubscriptionsByTopic`, `ses:GetConfigurationSet`, `ses:CreateConfigurationSet`, `ses:GetConfigurationSetEventDestinations`, `ses:CreateConfigurationSetEventDestination`, `ses:UpdateConfigurationSetEventDestination`.
+`sns:CreateTopic`, `sns:GetTopicAttributes`, `sns:SetTopicAttributes`, `sns:Subscribe`, `sns:ListSubscriptionsByTopic`, `sns:Unsubscribe`, `ses:GetConfigurationSet`, `ses:CreateConfigurationSet`, `ses:GetConfigurationSetEventDestinations`, `ses:CreateConfigurationSetEventDestination`, `ses:UpdateConfigurationSetEventDestination`.
 
 Naming a sending identity also needs `ses:PutEmailIdentityConfigurationSetAttributes`, and letting a deliverability check read your domain's DKIM records needs `ses:GetEmailIdentity`.
 
