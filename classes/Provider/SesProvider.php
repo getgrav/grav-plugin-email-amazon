@@ -191,7 +191,12 @@ final class SesProvider implements Provider
 
     // ------------------------------------------------------------- internals
 
-    /** Which of the three ways this plugin is set to send. Its own default is the API. */
+    /**
+     * Which of the three ways this plugin is set to send. Its own default is
+     * HTTPS, which puts the whole message through Amazon's API so every header
+     * arrives — the API transport sends the parts of a message instead and
+     * leaves custom headers behind, List-Unsubscribe included.
+     */
     public function transport(): string
     {
         $transport = strtolower(trim((string)($this->config['transport'] ?? self::TRANSPORT_HTTPS)));
