@@ -1,7 +1,7 @@
 name: Email Amazon
 slug: email-amazon
 type: plugin
-version: 1.1.1
+version: 1.1.2
 testing: false
 description: Amazon SES integration for new Email plugin
 icon: envelope
@@ -51,7 +51,7 @@ form:
       label: Username (for SMTP Only)
 
     password:
-      type: text
+      type: password
       label: Password (for SMTP Only)
 
     access_key:
@@ -59,7 +59,7 @@ form:
       label: Access Key (for API/HTTPS)
 
     secret_key:
-      type: text
+      type: password
       label: Secret Key (for API/HTTPS)
 
     region:

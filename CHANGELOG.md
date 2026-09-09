@@ -1,3 +1,9 @@
+# v1.1.2
+## 09/08/2026
+
+1. [](#bugfix)
+    * **The secret key and the SMTP password are no longer shown in the clear.** Every credential field in this plugin was typed `text`, so an account's sending credentials were rendered as readable text on the settings page and handed to the browser unmasked by the API. They are `password` fields now. The access key id stays readable: it identifies a key rather than being one, and hiding it takes away the one value that tells two keys apart.
+
 # v1.1.1
 ## 09/05/2026
 
