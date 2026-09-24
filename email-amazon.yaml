@@ -8,3 +8,5 @@ region:
 configuration_set:
 sns_topic:
 identity:
+inbound_topic_arn:
+inbound_s3_region:
