@@ -41,6 +41,18 @@ final class CurlHttp implements Http
     /** Bytes of response body kept before the transfer is abandoned. */
     public const MAX_BYTES = 10 * 1024 * 1024;
 
+    /**
+     * The defaults are right for a certificate and an API answer. The one
+     * caller that raises them is the inbound receiver's S3 download, which
+     * fetches a whole received message (up to 40 MB) from the job worker
+     * rather than from a request Amazon is waiting on.
+     */
+    public function __construct(
+        private readonly int $maxBytes = self::MAX_BYTES,
+        private readonly int $timeout = self::TIMEOUT,
+    ) {
+    }
+
     public function get(string $url): ?string
     {
         $answer = $this->send('GET', $url);
@@ -71,12 +83,13 @@ final class CurlHttp implements Http
         }
 
         $received = '';
+        $max = $this->maxBytes;
 
         curl_setopt_array($handle, [
             \CURLOPT_CUSTOMREQUEST => strtoupper($method),
             \CURLOPT_RETURNTRANSFER => false,
             \CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT,
-            \CURLOPT_TIMEOUT => self::TIMEOUT,
+            \CURLOPT_TIMEOUT => $this->timeout,
             \CURLOPT_FOLLOWLOCATION => true,
             \CURLOPT_MAXREDIRS => 2,
             \CURLOPT_SSL_VERIFYPEER => true,
@@ -84,13 +97,13 @@ final class CurlHttp implements Http
             \CURLOPT_PROTOCOLS => \CURLPROTO_HTTPS,
             \CURLOPT_REDIR_PROTOCOLS => \CURLPROTO_HTTPS,
             \CURLOPT_HTTPHEADER => $lines,
-            \CURLOPT_WRITEFUNCTION => static function ($_, string $chunk) use (&$received): int {
+            \CURLOPT_WRITEFUNCTION => static function ($_, string $chunk) use (&$received, $max): int {
                 $received .= $chunk;
 
                 // Returning fewer bytes than were handed over is how cURL is
                 // told to stop, which is the point: a body over the cap is
                 // abandoned rather than assembled and then thrown away.
-                return \strlen($received) > self::MAX_BYTES ? 0 : \strlen($chunk);
+                return \strlen($received) > $max ? 0 : \strlen($chunk);
             },
         ]);
 

@@ -7,6 +7,7 @@ namespace Grav\Plugin\EmailAmazon\Provider;
 use Grav\Plugin\Email\Providers\Capabilities;
 use Grav\Plugin\Email\Providers\DeliveryReports;
 use Grav\Plugin\Email\Providers\DomainFacts;
+use Grav\Plugin\Email\Providers\Inbound\InboundReceiver;
 use Grav\Plugin\Email\Providers\Provider;
 use Grav\Plugin\Email\Providers\WebhookSetup;
 use Grav\Plugin\EmailAmazon\Aws\AwsApi;
@@ -52,7 +53,7 @@ use Grav\Plugin\EmailAmazon\Aws\AwsApi;
  * rather than a CNAME into a zone of Amazon's, so there is no zone to name. The
  * lookup answers the actual value where the key may read it.
  */
-final class SesProvider implements Provider
+class SesProvider implements Provider
 {
     /** The key this provider is known by in routes and config. */
     public const KEY = 'ses';
@@ -156,6 +157,24 @@ final class SesProvider implements Provider
     public function reports(): ?DeliveryReports
     {
         return new SesReports($this->certificates, $this->http);
+    }
+
+    /**
+     * The email-receiving side: SES receipt rules publishing to SNS, or storing
+     * in S3 and notifying SNS.
+     *
+     * This class does not implement `InboundCapable` itself, because it loads
+     * on every Email plugin that fires `onEmailProviders`, including the ones
+     * from before inbound mail, where naming a missing interface is a fatal
+     * error. {@see SesInboundProvider} adds the interface and nothing else, and
+     * the plugin registers that one when the interface exists. Declaring this
+     * method here is safe on an older Email plugin: PHP resolves a return type
+     * only when the method returns, never when the class loads, and nothing
+     * calls it there. Not final, for that subclass.
+     */
+    public function inbound(): InboundReceiver
+    {
+        return new SesInbound(new SesReports($this->certificates, $this->http));
     }
 
     public function setup(): ?WebhookSetup
