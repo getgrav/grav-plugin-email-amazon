@@ -1,3 +1,13 @@
+# v1.2.0
+## 09/24/2026
+
+1. [](#new)
+    * **Receiving mail through SES.** On an Email plugin that has inbound mail, this plugin now offers an `ses` receiver, so an add-on that receives email (a helpdesk, say) can take mail from SES receipt rules without knowing anything about SES. It reads both actions: **Publish to Amazon SNS topic**, with the whole message inline in either encoding, and **Deliver to Amazon S3 bucket** with an SNS topic, where the notification becomes a reference and the message is downloaded afterwards from the add-on's worker, signed with the access key that already sends the mail. The SNS signature and subscription confirmation are checked exactly as for delivery reports. SES's SPF, DKIM, DMARC, spam and virus verdicts arrive with each message, a failed virus scan marks the message for the add-on to reject, and the recipients the rule matched are kept, which is where a `support+token@` address survives
+    * Added optional `inbound_topic_arn` and `inbound_s3_region` settings. The first refuses notifications from any topic but your own; the second is only for an S3 bucket in a different region from the receipt rule
+    * On an Email plugin from before inbound mail, nothing changes: the provider still loads and sends exactly as before, and simply offers no receiver
+1. [](#improved)
+    * The HTTP client takes an optional response cap and timeout, so the S3 download can fetch a message of up to 40 MB; certificates and API calls keep the 10 MB cap and 10-second timeout they had
+
 # v1.1.2
 ## 09/08/2026
 

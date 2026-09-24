@@ -1,0 +1,15 @@
+Return-Path: <renee@example.net>
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45]) by inbound-smtp.us-east-1.amazonaws.com with SMTP id d6iitobk75ur44p8kdnnp7g2n800 for support+t8f2k@reply.example.com; Wed, 23 Sep 2026 10:12:18 +0000 (UTC)
+Authentication-Results: amazonses.com; spf=pass (spfCheck: domain of example.net designates 209.85.128.45 as permitted sender) client-ip=209.85.128.45; envelope-from=renee@example.net; helo=mail-wm1-f45.google.com; dkim=pass header.i=@example.net; dmarc=none header.from=example.net;
+From: =?UTF-8?Q?Ren=C3=A9e_Dubois?= <renee@example.net>
+To: Support <support@reply.example.com>
+Subject: =?UTF-8?Q?Re:_[#1042]_Caf=C3=A9_menu_printer?=
+Message-ID: <CAF=r7x+Yk2Qm0a@mail.gmail.com>
+In-Reply-To: <hd.1042.aa11@helpdesk.example.com>
+References: <hd.1042.aa11@helpdesk.example.com>
+Date: Wed, 23 Sep 2026 12:12:04 +0200
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The printer prints the café menu twice.

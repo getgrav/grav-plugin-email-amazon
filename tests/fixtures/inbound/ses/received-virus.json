@@ -1,0 +1,110 @@
+{
+  "_comment": "SES SNS action where the virus and spam scans failed.",
+  "TopicArn": "arn:aws:sns:us-east-1:123456789012:helpdesk-inbound",
+  "Message": {
+    "notificationType": "Received",
+    "receipt": {
+      "timestamp": "2026-09-23T10:12:18.936Z",
+      "processingTimeMillis": 222,
+      "recipients": [
+        "support+t8f2k@reply.example.com"
+      ],
+      "spamVerdict": {
+        "status": "FAIL"
+      },
+      "virusVerdict": {
+        "status": "FAIL"
+      },
+      "spfVerdict": {
+        "status": "PROCESSING_FAILED"
+      },
+      "dkimVerdict": {
+        "status": "FAIL"
+      },
+      "dmarcVerdict": {
+        "status": "FAIL"
+      },
+      "action": {
+        "type": "SNS",
+        "topicArn": "arn:aws:sns:us-east-1:123456789012:helpdesk-inbound",
+        "encoding": "UTF8"
+      }
+    },
+    "mail": {
+      "timestamp": "2026-09-23T10:12:18.936Z",
+      "source": "renee@example.net",
+      "messageId": "d6iitobk75ur44p8kdnnp7g2n800",
+      "destination": [
+        "support@reply.example.com"
+      ],
+      "headersTruncated": false,
+      "headers": [
+        {
+          "name": "Return-Path",
+          "value": "<renee@example.net>"
+        },
+        {
+          "name": "Received",
+          "value": "from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45]) by inbound-smtp.us-east-1.amazonaws.com with SMTP id d6iitobk75ur44p8kdnnp7g2n800 for support+t8f2k@reply.example.com; Wed, 23 Sep 2026 10:12:18 +0000 (UTC)"
+        },
+        {
+          "name": "Authentication-Results",
+          "value": "amazonses.com; spf=pass (spfCheck: domain of example.net designates 209.85.128.45 as permitted sender) client-ip=209.85.128.45; envelope-from=renee@example.net; helo=mail-wm1-f45.google.com; dkim=pass header.i=@example.net; dmarc=none header.from=example.net;"
+        },
+        {
+          "name": "From",
+          "value": "=?UTF-8?Q?Ren=C3=A9e_Dubois?= <renee@example.net>"
+        },
+        {
+          "name": "To",
+          "value": "Support <support@reply.example.com>"
+        },
+        {
+          "name": "Subject",
+          "value": "=?UTF-8?Q?Re:_[#1042]_Caf=C3=A9_menu_printer?="
+        },
+        {
+          "name": "Message-ID",
+          "value": "<CAF=r7x+Yk2Qm0a@mail.gmail.com>"
+        },
+        {
+          "name": "In-Reply-To",
+          "value": "<hd.1042.aa11@helpdesk.example.com>"
+        },
+        {
+          "name": "References",
+          "value": "<hd.1042.aa11@helpdesk.example.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 23 Sep 2026 12:12:04 +0200"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=UTF-8"
+        },
+        {
+          "name": "Content-Transfer-Encoding",
+          "value": "8bit"
+        }
+      ],
+      "commonHeaders": {
+        "returnPath": "renee@example.net",
+        "from": [
+          "Renée Dubois <renee@example.net>"
+        ],
+        "date": "Wed, 23 Sep 2026 12:12:04 +0200",
+        "to": [
+          "Support <support@reply.example.com>"
+        ],
+        "messageId": "<CAF=r7x+Yk2Qm0a@mail.gmail.com>",
+        "subject": "Re: [#1042] Café menu printer"
+      }
+    },
+    "content": "Return-Path: <renee@example.net>\r\nReceived: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45]) by inbound-smtp.us-east-1.amazonaws.com with SMTP id d6iitobk75ur44p8kdnnp7g2n800 for support+t8f2k@reply.example.com; Wed, 23 Sep 2026 10:12:18 +0000 (UTC)\r\nAuthentication-Results: amazonses.com; spf=pass (spfCheck: domain of example.net designates 209.85.128.45 as permitted sender) client-ip=209.85.128.45; envelope-from=renee@example.net; helo=mail-wm1-f45.google.com; dkim=pass header.i=@example.net; dmarc=none header.from=example.net;\r\nFrom: =?UTF-8?Q?Ren=C3=A9e_Dubois?= <renee@example.net>\r\nTo: Support <support@reply.example.com>\r\nSubject: =?UTF-8?Q?Re:_[#1042]_Caf=C3=A9_menu_printer?=\r\nMessage-ID: <CAF=r7x+Yk2Qm0a@mail.gmail.com>\r\nIn-Reply-To: <hd.1042.aa11@helpdesk.example.com>\r\nReferences: <hd.1042.aa11@helpdesk.example.com>\r\nDate: Wed, 23 Sep 2026 12:12:04 +0200\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\nThe printer prints the café menu twice.\r\n"
+  }
+}
