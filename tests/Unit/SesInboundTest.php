@@ -212,6 +212,20 @@ final class SesInboundTest extends TestCase
         self::assertSame('none', $message->auth['dkim']);
     }
 
+    public function testBase64ContentWithNoEncodingFieldIsStillRead(): void
+    {
+        $envelope = self::load('received-sns-base64.json');
+        unset($envelope['Message']['receipt']['action']['encoding']);
+        $utf8 = self::load('received-sns-utf8.json');
+        unset($utf8['Message']['receipt']['action']['encoding']);
+
+        $latin = self::only($this->receiver()->parse(self::request(self::sign(self::wrap($envelope))), []));
+        self::assertSame('München Bestellung', $latin->subject);
+
+        $plain = self::only($this->receiver()->parse(self::request(self::sign(self::wrap($utf8))), []));
+        self::assertSame($utf8['Message']['content'], $plain->raw);
+    }
+
     public function testAVirusIsMarkedForTheConsumerToReject(): void
     {
         $message = self::only($this->receiver()->parse(self::request(self::sign(self::notification('received-virus.json'))), []));

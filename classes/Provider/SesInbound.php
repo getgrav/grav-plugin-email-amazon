@@ -267,7 +267,7 @@ final class SesInbound implements InboundReceiver
         }
 
         $raw = $answer['raw'];
-        if (preg_match('/^(?:From |[A-Za-z0-9-]+:)/', ltrim($raw)) !== 1) {
+        if (!self::looksLikeMime($raw)) {
             throw new \RuntimeException(
                 'the S3 object is not a mail message. If the receipt rule encrypts messages with a KMS key, turn that off: '
                 . 'SES encrypts on the client side, and only the AWS Java and Ruby SDKs can decrypt it'
@@ -339,7 +339,14 @@ final class SesInbound implements InboundReceiver
                 if (!\is_string($content) || trim($content) === '') {
                     return InboundPayload::unreadable('the SNS action notification carried no content');
                 }
-                $encoding = strtoupper(str_replace(['-', '_'], '', trim((string)($action['encoding'] ?? 'UTF8'))));
+                // `encoding` is in the action object of every notification seen,
+                // but Amazon's field table leaves it out, so a body that is not
+                // a message and decodes as base64 into one is read as base64 too.
+                $encoding = strtoupper(str_replace(['-', '_'], '', trim((string)($action['encoding'] ?? ''))));
+                if ($encoding === '' && !self::looksLikeMime($content)) {
+                    $decoded = base64_decode(preg_replace('/\s+/', '', $content) ?? '', true);
+                    $encoding = \is_string($decoded) && self::looksLikeMime($decoded) ? 'BASE64' : 'UTF8';
+                }
                 if ($encoding === 'BASE64') {
                     $content = base64_decode(preg_replace('/\s+/', '', $content) ?? '', true);
                     if ($content === false || $content === '') {
@@ -445,6 +452,12 @@ final class SesInbound implements InboundReceiver
         }
 
         return $message->with($overrides);
+    }
+
+    /** Whether bytes start the way a mail message does: a header line, or an mbox From line. */
+    private static function looksLikeMime(string $bytes): bool
+    {
+        return preg_match('/^(?:From |[A-Za-z0-9-]+:)/', ltrim($bytes)) === 1;
     }
 
     /** The region in an ARN, `arn:aws:sns:us-east-1:…`, or ''. */
