@@ -94,3 +94,22 @@ form:
       label: Sending identity
       placeholder: example.com
       help: "The verified domain or address you send from, as it appears under Identities in the SES console. Filling this in lets the setup make the configuration set that identity's default, so mail sent from it by anything at all publishes its events. Not needed when Configuration set above is filled in, because this plugin then names the set on every message itself. Careful: making it the default affects every message sent from that identity, including mail sent by something other than Grav."
+
+    receiving_mail:
+      type: section
+      title: Receiving mail
+      underline: true
+      text: "SES can receive the mail sent to your domain and pass each message to this site through an SNS topic, for an add-on that receives email such as a helpdesk. The add-on gives you the address to subscribe to the topic. Both settings below are optional. Mail stored in S3 is downloaded with the access key above, which then needs s3:GetObject on the bucket."
+
+    inbound_topic_arn:
+      type: text
+      label: Inbound topic ARN
+      placeholder: arn:aws:sns:us-east-1:123456789012:helpdesk-inbound
+      help: "The ARN of the SNS topic your receipt rule publishes to. When set, messages from any other topic are refused, even with a valid Amazon signature. Several can be given, separated by commas."
+
+    inbound_s3_region:
+      type: text
+      size: small
+      label: Inbound S3 bucket region
+      placeholder: us-east-1
+      help: "Only when the receipt rule stores mail in S3 and the bucket is in a different region from the rule. Left empty, the rule's own region is used."

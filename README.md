@@ -35,11 +35,13 @@ region:
 configuration_set:
 sns_topic:
 identity:
+inbound_topic_arn:
+inbound_s3_region:
 ```
 
 Note that if you use the Admin Plugin, a file with your configuration named email-amazon.yaml will be saved in the `user/config/plugins/`-folder once the configuration is saved in the Admin.
 
-The last three are only used by delivery reports, and there is a section about them further down.
+`configuration_set`, `sns_topic` and `identity` are only used by delivery reports, and the two `inbound_` settings only by receiving mail. Both have a section further down.
 
 ## Usage
 
@@ -109,6 +111,28 @@ SES hands your own headers back in `mail.headers` on every event-publishing noti
 - Amazon cuts the header list short when the original headers went over 10 KB. Message tags survive that, and this plugin reads a send id out of `mail.tags` as well as out of `mail.headers`.
 
 And the obvious one: on the `api` transport there are no custom headers to hand back at all, because they never left.
+
+## Receiving mail
+
+SES can receive mail for your domain and hand each message to your site through an SNS topic. This plugin knows how to read those notifications and hands that to the Email plugin, so an add-on that receives email (a helpdesk, say) can use SES without knowing anything about it. It needs Email plugin 5.3 or later, the release that added inbound mail; on an older Email plugin this plugin keeps sending exactly as before and simply does not offer a receiver.
+
+The add-on gives you the webhook address. Then:
+
+1. In the SES console, in a region that receives email, verify the domain that will receive mail under **Identities**. A subdomain such as `reply.example.com` leaves your normal mailbox alone.
+2. At your DNS host, add an MX record for that name pointing to `inbound-smtp.<region>.amazonaws.com` (the region you verified it in), priority 10.
+3. In the SNS console, in the same region, create a standard topic, and create a subscription on it with protocol **HTTPS** and the webhook address as the endpoint. Amazon posts a confirmation straight away and the site confirms it by itself.
+4. Back in SES, under **Email receiving**, create a rule set (or open the active one) and add a rule for your support address, with one of these actions:
+   - **Publish to Amazon SNS topic**, with that topic and **Base64** encoding. The whole message travels inside the notification. Base64 keeps every byte of a message written in another charset, where UTF-8 encoding can change them. Amazon bounces anything over 150 KB with this action, so it only suits mail without real attachments.
+   - **Deliver to Amazon S3 bucket**, with that topic as its SNS topic and **no message encryption**. SES stores the message (up to 40 MB) and the notification only names it; the add-on downloads it afterwards with this plugin's access key, which needs `s3:GetObject` on the bucket. If the bucket is in another region than the rule, set **Inbound S3 bucket region**. SES's message encryption happens on the client side with a KMS key, and only the AWS Java and Ruby SDKs can undo it, so leave it off.
+5. Make sure the rule set is the active one.
+
+### How the notifications are checked
+
+Exactly as delivery reports are: the SNS signature is checked against Amazon's certificate, fetched only from `sns.<region>.amazonaws.com`, and a subscription confirmation is only ever answered for an Amazon address. Any AWS account can create a topic and try to subscribe an address it has learned; the long secret in the webhook address already stops that, and **Inbound topic ARN** narrows it to your own topic, refusing everything else before any certificate is fetched.
+
+### What SES says about each message
+
+SES scans every message and reports five verdicts, which arrive with the message as `auth`: `spf`, `dkim` and `dmarc` as usual, plus `spam` and `virus`. `PASS` is `pass`, `FAIL` is `fail`, `GRAY` is `none` (no definite result: for SPF that covers none, softfail and neutral), and `PROCESSING_FAILED` is `temperror`; a disabled scan is left out. They win over any `Authentication-Results` header inside the message. SES gives no spam score, so the score is 0 for a spam `PASS` and 10 for a `FAIL`. A message whose virus scan failed still arrives, marked `auth['virus'] = 'fail'`, and the add-on rejects it; refusing the request instead would only make SNS send it again. The envelope comes from SES too: the recipients the rule matched, where a `support+token@` address survives, and the MAIL FROM.
 
 ## Credits
 

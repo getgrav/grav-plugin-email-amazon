@@ -6,6 +6,7 @@ use Grav\Common\Grav;
 use Grav\Common\Plugin;
 use Grav\Plugin\EmailAmazon\Http\CurlHttp;
 use Grav\Plugin\EmailAmazon\Provider\CertificateStore;
+use Grav\Plugin\EmailAmazon\Provider\SesInboundProvider;
 use Grav\Plugin\EmailAmazon\Provider\SesProvider;
 use Grav\Plugin\EmailAmazon\Transport\ConfigurationSetTransport;
 use Grav\Plugin\EmailAmazon\Transport\SesDsn;
@@ -76,6 +77,12 @@ class EmailAmazonPlugin extends Plugin
      * a site the honest answer is that there is no provider here, and answering
      * it before anything is named means the autoloader is never sent at a file
      * this copy of PHP cannot parse.
+     *
+     * Where the Email plugin also has inbound mail, the provider registered is
+     * {@see SesInboundProvider}, which is the same provider marked as able to
+     * receive mail through SES receipt rules. On an older Email plugin that
+     * interface does not exist, and naming it would be a fatal error, so the
+     * plain provider is registered instead.
      */
     public function onEmailProviders(Event $e): void
     {
@@ -90,7 +97,11 @@ class EmailAmazonPlugin extends Plugin
 
         $http = new CurlHttp();
 
-        $registry->add(new SesProvider(
+        $class = interface_exists('Grav\\Plugin\\Email\\Providers\\Inbound\\InboundCapable')
+            ? SesInboundProvider::class
+            : SesProvider::class;
+
+        $registry->add(new $class(
             (array)$this->config->get('plugins.email-amazon', []),
             new CertificateStore($this->certificateDirectory()),
             $http,

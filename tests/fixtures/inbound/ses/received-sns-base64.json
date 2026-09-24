@@ -1,0 +1,94 @@
+{
+  "_comment": "SES receipt rule SNS action, Base64 encoding, with an 8-bit ISO-8859-1 body that UTF-8 encoding would have mangled.",
+  "TopicArn": "arn:aws:sns:us-east-1:123456789012:helpdesk-inbound",
+  "Message": {
+    "notificationType": "Received",
+    "receipt": {
+      "timestamp": "2026-09-23T10:12:18.936Z",
+      "processingTimeMillis": 222,
+      "recipients": [
+        "support@reply.example.com"
+      ],
+      "spamVerdict": {
+        "status": "PASS"
+      },
+      "virusVerdict": {
+        "status": "PASS"
+      },
+      "spfVerdict": {
+        "status": "GRAY"
+      },
+      "dkimVerdict": {
+        "status": "GRAY"
+      },
+      "dmarcVerdict": {
+        "status": "GRAY"
+      },
+      "action": {
+        "type": "SNS",
+        "topicArn": "arn:aws:sns:us-east-1:123456789012:helpdesk-inbound",
+        "encoding": "BASE64"
+      }
+    },
+    "mail": {
+      "timestamp": "2026-09-23T10:12:18.936Z",
+      "source": "renee@example.net",
+      "messageId": "d6iitobk75ur44p8kdnnp7g2n800",
+      "destination": [
+        "support@reply.example.com"
+      ],
+      "headersTruncated": false,
+      "headers": [
+        {
+          "name": "Return-Path",
+          "value": "<juergen@example.de>"
+        },
+        {
+          "name": "From",
+          "value": "=?ISO-8859-1?Q?J=FCrgen_Wei=DF?= <juergen@example.de>"
+        },
+        {
+          "name": "To",
+          "value": "support@reply.example.com"
+        },
+        {
+          "name": "Subject",
+          "value": "=?ISO-8859-1?Q?M=FCnchen_Bestellung?="
+        },
+        {
+          "name": "Message-ID",
+          "value": "<1234.5678@example.de>"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 23 Sep 2026 09:00:00 +0200"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=ISO-8859-1"
+        },
+        {
+          "name": "Content-Transfer-Encoding",
+          "value": "8bit"
+        }
+      ],
+      "commonHeaders": {
+        "returnPath": "renee@example.net",
+        "from": [
+          "Renée Dubois <renee@example.net>"
+        ],
+        "date": "Wed, 23 Sep 2026 12:12:04 +0200",
+        "to": [
+          "Support <support@reply.example.com>"
+        ],
+        "messageId": "<CAF=r7x+Yk2Qm0a@mail.gmail.com>",
+        "subject": "Re: [#1042] Café menu printer"
+      }
+    },
+    "content": "UmV0dXJuLVBhdGg6IDxqdWVyZ2VuQGV4YW1wbGUuZGU+DQpGcm9tOiA9P0lTTy04ODU5LTE/UT9KPUZDcmdlbl9XZWk9REY/PSA8anVlcmdlbkBleGFtcGxlLmRlPg0KVG86IHN1cHBvcnRAcmVwbHkuZXhhbXBsZS5jb20NClN1YmplY3Q6ID0/SVNPLTg4NTktMT9RP009RkNuY2hlbl9CZXN0ZWxsdW5nPz0NCk1lc3NhZ2UtSUQ6IDwxMjM0LjU2NzhAZXhhbXBsZS5kZT4NCkRhdGU6IFdlZCwgMjMgU2VwIDIwMjYgMDk6MDA6MDAgKzAyMDANCk1JTUUtVmVyc2lvbjogMS4wDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9SVNPLTg4NTktMQ0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogOGJpdA0KDQpHcvzfZSBhdXMgTfxuY2hlbi4NCg=="
+  }
+}
