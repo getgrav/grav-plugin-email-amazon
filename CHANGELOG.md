@@ -1,3 +1,9 @@
+# v1.2.1
+## 10/21/2026
+
+1. [](#new)
+    * **A test address for webhook checks.** The provider now answers `testRecipient()` with `success@simulator.amazonses.com`, the SES mailbox simulator's success address: SES accepts the message, delivers it to nobody and publishes a delivery notification for it, even on an account still in the sandbox. A newsletter add-on that tests its delivery webhook after Set up sends its test there, so no real inbox gets it and the event still comes back through the configuration set this plugin stamps on every message. It is an optional method rather than part of the Email plugin's provider interface, so this plugin loads exactly as before beside an older Email plugin, which simply never asks
+
 # v1.2.0
 ## 09/24/2026
 

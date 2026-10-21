@@ -82,6 +82,23 @@ class SesProvider implements Provider
     /** The zone a DKIM selector CNAMEs into. */
     public const DKIM_ZONE = 'dkim.amazonses.com';
 
+    /**
+     * The SES mailbox simulator's success address: accepted, delivered to
+     * nobody, and reported as a delivery, so it produces the event a store's
+     * webhook test waits for.
+     *
+     * "Successful delivery—The recipient's email provider accepts your email.
+     * If you set up delivery notifications ... Amazon SES sends you a delivery
+     * notification through Amazon Simple Notification Service (Amazon SNS)",
+     * and "You can use the mailbox simulator even if your account is in the
+     * Amazon SES sandbox":
+     * https://docs.aws.amazon.com/ses/latest/dg/send-an-email-from-console.html
+     * It only answers mail sent through SES itself, which is what a test from
+     * this transport is, and the delivery is published like any other through
+     * the configuration set this plugin stamps on every message.
+     */
+    public const TEST_RECIPIENT = 'success@simulator.amazonses.com';
+
     private readonly ?CertificateStore $certificates;
 
     /** @var (callable(array<string, mixed>): AwsApi) */
@@ -206,6 +223,20 @@ class SesProvider implements Provider
             . 'configuration set as the default on your verified domain, under Identities, or send with an '
             . 'X-SES-CONFIGURATION-SET header naming it; without that step the destination is set up and no event '
             . 'is ever published.';
+    }
+
+    /**
+     * Where a store sends its webhook test: {@see TEST_RECIPIENT}.
+     *
+     * Not part of the Email plugin's `Provider` interface, and that is the
+     * point: a store asks `method_exists()` for it, so this class still loads
+     * beside an Email plugin from before the method existed, and a store that
+     * does not know about it never calls it. A constant, with no I/O, because
+     * a settings screen reads it.
+     */
+    public function testRecipient(): ?string
+    {
+        return self::TEST_RECIPIENT;
     }
 
     // ------------------------------------------------------------- internals
