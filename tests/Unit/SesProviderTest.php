@@ -167,6 +167,22 @@ final class SesProviderTest extends TestCase
         self::assertStringContainsString('no event is ever published', $instructions);
     }
 
+    /**
+     * The address a store's webhook test goes to: the mailbox simulator, which
+     * nobody receives and SES reports as delivered. A method on this class and
+     * not on the Email plugin's interface, so a store asks before it calls.
+     */
+    public function testTheTestAddressIsTheMailboxSimulator(): void
+    {
+        $http = new FakeHttp();
+        $provider = self::provider($http);
+
+        self::assertSame('success@simulator.amazonses.com', $provider->testRecipient());
+        self::assertNotFalse(filter_var($provider->testRecipient(), FILTER_VALIDATE_EMAIL));
+        self::assertFalse(method_exists(Provider::class, 'testRecipient'), 'it is this class\'s, not the contract\'s');
+        self::assertSame([], $http->requests);
+    }
+
     /** None of the cheap methods makes a request, because every one of them runs on a settings screen. */
     public function testNothingDrawnOnAScreenTouchesTheNetwork(): void
     {
